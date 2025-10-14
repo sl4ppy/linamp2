@@ -129,7 +129,8 @@ bool AudioSourceCD::doPollDetectDiscInsertion()
 void AudioSourceCD::doLoad()
 {
     auto state = PyGILState_Ensure();
-    PyObject_CallMethod(cdplayer, "load", NULL);
+    PyObject *result = PyObject_CallMethod(cdplayer, "load", NULL);
+    if(result) Py_DECREF(result);
     PyGILState_Release(state);
 }
 
@@ -143,7 +144,8 @@ void AudioSourceCD::handleLoadEnd()
 void AudioSourceCD::doEject()
 {
     auto state = PyGILState_Ensure();
-    PyObject_CallMethod(cdplayer, "eject", NULL);
+    PyObject *result = PyObject_CallMethod(cdplayer, "eject", NULL);
+    if(result) Py_DECREF(result);
     PyGILState_Release(state);
 }
 
@@ -182,7 +184,8 @@ void AudioSourceCD::deactivate()
     emit playbackStateChanged(MediaPlayer::StoppedState);
     if(cdplayer == nullptr) return;
     auto state = PyGILState_Ensure();
-    PyObject_CallMethod(cdplayer, "stop", NULL);
+    PyObject *result = PyObject_CallMethod(cdplayer, "stop", NULL);
+    if(result) Py_DECREF(result);
     PyGILState_Release(state);
 
 }
@@ -196,7 +199,8 @@ void AudioSourceCD::handlePrevious()
 {
     if(cdplayer == nullptr) return;
     auto state = PyGILState_Ensure();
-    PyObject_CallMethod(cdplayer, "prev", NULL);
+    PyObject *result = PyObject_CallMethod(cdplayer, "prev", NULL);
+    if(result) Py_DECREF(result);
     PyGILState_Release(state);
     refreshStatus();
 }
@@ -205,7 +209,8 @@ void AudioSourceCD::handlePlay()
 {
     if(cdplayer == nullptr) return;
     auto state = PyGILState_Ensure();
-    PyObject_CallMethod(cdplayer, "play", NULL);
+    PyObject *result = PyObject_CallMethod(cdplayer, "play", NULL);
+    if(result) Py_DECREF(result);
     PyGILState_Release(state);
     refreshStatus();
 }
@@ -214,7 +219,8 @@ void AudioSourceCD::handlePause()
 {
     if(cdplayer == nullptr) return;
     auto state = PyGILState_Ensure();
-    PyObject_CallMethod(cdplayer, "pause", NULL);
+    PyObject *result = PyObject_CallMethod(cdplayer, "pause", NULL);
+    if(result) Py_DECREF(result);
     PyGILState_Release(state);
     refreshStatus();
 }
@@ -223,7 +229,8 @@ void AudioSourceCD::handleStop()
 {
     if(cdplayer == nullptr) return;
     auto state = PyGILState_Ensure();
-    PyObject_CallMethod(cdplayer, "stop", NULL);
+    PyObject *result = PyObject_CallMethod(cdplayer, "stop", NULL);
+    if(result) Py_DECREF(result);
     PyGILState_Release(state);
     refreshStatus();
 }
@@ -232,7 +239,8 @@ void AudioSourceCD::handleNext()
 {
     if(cdplayer == nullptr) return;
     auto state = PyGILState_Ensure();
-    PyObject_CallMethod(cdplayer, "next", NULL);
+    PyObject *result = PyObject_CallMethod(cdplayer, "next", NULL);
+    if(result) Py_DECREF(result);
     PyGILState_Release(state);
     refreshStatus();
 }
@@ -262,7 +270,8 @@ void AudioSourceCD::handleShuffle()
     this->isShuffleEnabled = !this->isShuffleEnabled;
 
     auto state = PyGILState_Ensure();
-    PyObject_CallMethod(cdplayer, "set_shuffle", "i", this->isShuffleEnabled);
+    PyObject *result = PyObject_CallMethod(cdplayer, "set_shuffle", "i", this->isShuffleEnabled);
+    if(result) Py_DECREF(result);
     PyGILState_Release(state);
 
     refreshStatus(false);
@@ -275,7 +284,8 @@ void AudioSourceCD::handleRepeat()
     this->isRepeatEnabled = !this->isRepeatEnabled;
 
     auto state = PyGILState_Ensure();
-    PyObject_CallMethod(cdplayer, "set_repeat", "i", this->isRepeatEnabled);
+    PyObject *result = PyObject_CallMethod(cdplayer, "set_repeat", "i", this->isRepeatEnabled);
+    if(result) Py_DECREF(result);
     PyGILState_Release(state);
 
     refreshStatus(false);
@@ -286,7 +296,8 @@ void AudioSourceCD::handleSeek(int mseconds)
     if(cdplayer == nullptr) return;
 
     auto state = PyGILState_Ensure();
-    PyObject_CallMethod(cdplayer, "seek", "l", mseconds);
+    PyObject *result = PyObject_CallMethod(cdplayer, "seek", "l", mseconds);
+    if(result) Py_DECREF(result);
     PyGILState_Release(state);
 
     refreshStatus(false);

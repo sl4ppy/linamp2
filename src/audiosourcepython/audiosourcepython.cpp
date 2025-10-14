@@ -136,7 +136,8 @@ bool AudioSourcePython::doPollEvents()
 void AudioSourcePython::doLoad()
 {
     auto state = PyGILState_Ensure();
-    PyObject_CallMethod(player, "load", NULL);
+    PyObject *result = PyObject_CallMethod(player, "load", NULL);
+    if(result) Py_DECREF(result);
     PyGILState_Release(state);
 }
 
@@ -150,7 +151,8 @@ void AudioSourcePython::handleLoadEnd()
 void AudioSourcePython::doEject()
 {
     auto state = PyGILState_Ensure();
-    PyObject_CallMethod(player, "eject", NULL);
+    PyObject *result = PyObject_CallMethod(player, "eject", NULL);
+    if(result) Py_DECREF(result);
     PyGILState_Release(state);
 }
 
@@ -192,7 +194,8 @@ void AudioSourcePython::deactivate()
     emit this->messageClear();
     if(player == nullptr) return;
     auto state = PyGILState_Ensure();
-    PyObject_CallMethod(player, "stop", NULL);
+    PyObject *result = PyObject_CallMethod(player, "stop", NULL);
+    if(result) Py_DECREF(result);
     PyGILState_Release(state);
 
 }
@@ -209,6 +212,8 @@ void AudioSourcePython::handlePrevious()
     PyObject *pyResult = PyObject_CallMethod(player, "prev", NULL);
     if(pyResult == nullptr) {
         PyErr_Print();
+    } else {
+        Py_DECREF(pyResult);
     }
     PyGILState_Release(state);
     refreshStatus();
@@ -221,6 +226,8 @@ void AudioSourcePython::handlePlay()
     PyObject *pyResult = PyObject_CallMethod(player, "play", NULL);
     if(pyResult == nullptr) {
         PyErr_Print();
+    } else {
+        Py_DECREF(pyResult);
     }
     PyGILState_Release(state);
     refreshStatus();
@@ -233,6 +240,8 @@ void AudioSourcePython::handlePause()
     PyObject *pyResult = PyObject_CallMethod(player, "pause", NULL);
     if(pyResult == nullptr) {
         PyErr_Print();
+    } else {
+        Py_DECREF(pyResult);
     }
     PyGILState_Release(state);
     refreshStatus();
@@ -245,6 +254,8 @@ void AudioSourcePython::handleStop()
     PyObject *pyResult = PyObject_CallMethod(player, "stop", NULL);
     if(pyResult == nullptr) {
         PyErr_Print();
+    } else {
+        Py_DECREF(pyResult);
     }
     PyGILState_Release(state);
     refreshStatus();
@@ -257,6 +268,8 @@ void AudioSourcePython::handleNext()
     PyObject *pyResult = PyObject_CallMethod(player, "next", NULL);
     if(pyResult == nullptr) {
         PyErr_Print();
+    } else {
+        Py_DECREF(pyResult);
     }
     PyGILState_Release(state);
     refreshStatus();
@@ -285,7 +298,8 @@ void AudioSourcePython::handleShuffle()
     this->isShuffleEnabled = !this->isShuffleEnabled;
 
     auto state = PyGILState_Ensure();
-    PyObject_CallMethod(player, "set_shuffle", "i", this->isShuffleEnabled);
+    PyObject *result = PyObject_CallMethod(player, "set_shuffle", "i", this->isShuffleEnabled);
+    if(result) Py_DECREF(result);
     PyGILState_Release(state);
 
     refreshStatus(false);
@@ -298,7 +312,8 @@ void AudioSourcePython::handleRepeat()
     this->isRepeatEnabled = !this->isRepeatEnabled;
 
     auto state = PyGILState_Ensure();
-    PyObject_CallMethod(player, "set_repeat", "i", this->isRepeatEnabled);
+    PyObject *result = PyObject_CallMethod(player, "set_repeat", "i", this->isRepeatEnabled);
+    if(result) Py_DECREF(result);
     PyGILState_Release(state);
 
     refreshStatus(false);
@@ -309,7 +324,8 @@ void AudioSourcePython::handleSeek(int mseconds)
     if(player == nullptr) return;
 
     auto state = PyGILState_Ensure();
-    PyObject_CallMethod(player, "seek", "l", mseconds);
+    PyObject *result = PyObject_CallMethod(player, "seek", "l", mseconds);
+    if(result) Py_DECREF(result);
     PyGILState_Release(state);
 
     refreshStatus(false);
@@ -572,7 +588,8 @@ void AudioSourcePython::refreshMessage()
     quint32 messageTimeout = PyLong_AsLong(pyMessageTimeout);
 
     if(showMessage) {
-        PyObject_CallMethod(player, "clear_message", NULL);
+        PyObject *result = PyObject_CallMethod(player, "clear_message", NULL);
+        if(result) Py_DECREF(result);
         emit this->messageSet(message, messageTimeout);
     }
 

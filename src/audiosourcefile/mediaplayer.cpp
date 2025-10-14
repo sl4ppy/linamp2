@@ -404,15 +404,15 @@ QString MediaPlayer::errorString() const
         if(m_decoder) errorStr.append(": ").append(m_decoder->errorString());
         break;
     case FormatError:
-        return "Format Error";
+        errorStr = "Format Error";
         if(m_decoder) errorStr.append(": ").append(m_decoder->errorString());
         break;
     case NetworkError:
-        return "Network Error";
+        errorStr = "Network Error";
         if(m_decoder) errorStr.append(": ").append(m_decoder->errorString());
         break;
     case AccessDeniedError:
-        return "Access Denied";
+        errorStr = "Access Denied";
         if(m_decoder) errorStr.append(": ").append(m_decoder->errorString());
         break;
     }

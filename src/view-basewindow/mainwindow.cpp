@@ -6,6 +6,7 @@
 #include "ui_desktopplayerwindow.h"
 #include "scale.h"
 #include "util.h"
+#include "screensaverview.h"
 
 #ifdef IS_EMBEDDED
 #include "embeddedbasewindow.h"
@@ -18,6 +19,7 @@
 #include <QLabel>
 #include <QVBoxLayout>
 #include <QMessageBox>
+#include <QDebug>
 
 #ifdef IS_EMBEDDED
 const unsigned int WINDOW_W = 320 * UI_SCALE;
@@ -115,11 +117,17 @@ MainWindow::MainWindow(QWidget *parent)
     connect(menu, &MainMenuView::backClicked, this, &MainWindow::showPlayer);
     connect(menu, &MainMenuView::sourceSelected, coordinator, &AudioSourceCoordinator::setSource);
 
+    // Prepare screensaver view
+    screenSaver = new ScreenSaverView(this);
+    screenSaver->setAttribute(Qt::WidgetAttribute::WA_StyledBackground, true);
+    connect(screenSaver, &ScreenSaverView::userActivityDetected, this, &MainWindow::deactivateScreenSaver);
+
     // Prepare navigation stack
     viewStack = new QStackedLayout;
-    viewStack->addWidget(playerWindow);
-    viewStack->addWidget(playlistWindow);
-    viewStack->addWidget(menu);
+    viewStack->addWidget(playerWindow);     // Index 0
+    viewStack->addWidget(playlistWindow);   // Index 1
+    viewStack->addWidget(menu);             // Index 2
+    viewStack->addWidget(screenSaver);      // Index 3
 
     // Final UI setup and show
     QVBoxLayout *centralLayout = new QVBoxLayout;
@@ -140,6 +148,21 @@ MainWindow::MainWindow(QWidget *parent)
     #ifndef IS_EMBEDDED
     setWindowFlags(Qt::CustomizeWindowHint);
     #endif
+
+    // Setup screensaver timer
+    screenSaverTimer = new QTimer(this);
+    screenSaverTimer->setSingleShot(true);
+    screenSaverTimer->setInterval(SCREENSAVER_TIMEOUT_MS);
+    connect(screenSaverTimer, &QTimer::timeout, this, &MainWindow::activateScreenSaver);
+
+    // Monitor playback state changes from all audio sources
+    connect(fileSource, &AudioSource::playbackStateChanged, this, &MainWindow::onPlaybackStateChanged);
+    connect(btSource, &AudioSource::playbackStateChanged, this, &MainWindow::onPlaybackStateChanged);
+    connect(cdSource, &AudioSource::playbackStateChanged, this, &MainWindow::onPlaybackStateChanged);
+    connect(spotSource, &AudioSource::playbackStateChanged, this, &MainWindow::onPlaybackStateChanged);
+
+    // Start the screensaver timer (idle from beginning)
+    screenSaverTimer->start();
 }
 
 MainWindow::~MainWindow()
@@ -151,16 +174,19 @@ MainWindow::~MainWindow()
 void MainWindow::showPlayer()
 {
     viewStack->setCurrentIndex(0);
+    resetScreenSaverTimer();
 }
 
 void MainWindow::showPlaylist()
 {
     viewStack->setCurrentIndex(1);
+    resetScreenSaverTimer();
 }
 
 void MainWindow::showMenu()
 {
     viewStack->setCurrentIndex(2);
+    resetScreenSaverTimer();
 }
 
 void MainWindow::showShutdownModal()
@@ -221,4 +247,55 @@ void MainWindow::open()
     if (fileDialog.exec() == QDialog::Accepted)
         fileSource->addToPlaylist(fileDialog.selectedUrls());
 
+}
+
+// Screensaver implementation
+
+void MainWindow::onPlaybackStateChanged(MediaPlayer::PlaybackState state)
+{
+    currentPlaybackState = state;
+
+    if (state == MediaPlayer::PlayingState) {
+        // Music is playing, stop screensaver timer
+        screenSaverTimer->stop();
+        // If screensaver is active, deactivate it
+        if (screenSaverActive) {
+            deactivateScreenSaver();
+        }
+    } else if (state == MediaPlayer::StoppedState || state == MediaPlayer::PausedState) {
+        // Music stopped or paused, restart screensaver timer
+        resetScreenSaverTimer();
+    }
+}
+
+void MainWindow::activateScreenSaver()
+{
+    if (screenSaverActive) return;
+
+    qDebug() << "Activating screensaver";
+    screenSaverActive = true;
+    viewStack->setCurrentIndex(3); // Show screensaver (index 3)
+}
+
+void MainWindow::deactivateScreenSaver()
+{
+    if (!screenSaverActive) return;
+
+    qDebug() << "Deactivating screensaver";
+    screenSaverActive = false;
+    viewStack->setCurrentIndex(0); // Return to player view
+    resetScreenSaverTimer();
+}
+
+void MainWindow::resetScreenSaverTimer()
+{
+    // Only reset timer if not currently playing music
+    if (currentPlaybackState == MediaPlayer::PlayingState) {
+        screenSaverTimer->stop();
+        return;
+    }
+
+    // Restart the timer
+    screenSaverTimer->stop();
+    screenSaverTimer->start();
 }

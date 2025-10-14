@@ -23,6 +23,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/view-basewindow)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/view-menu)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/view-player)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/view-playlist)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/view-screensaver)
 
 qt_add_executable(player WIN32 MACOSX_BUNDLE
     src/audiosource-base/audiosource.cpp
@@ -79,6 +80,9 @@ qt_add_executable(player WIN32 MACOSX_BUNDLE
     src/view-menu/mainmenuview.cpp
     src/view-menu/mainmenuview.h
     src/view-menu/mainmenuview.ui
+    src/view-screensaver/screensaverview.cpp
+    src/view-screensaver/screensaverview.h
+    src/view-screensaver/screensaverview.ui
     src/shared/scale.cpp
     src/shared/scale.h
     src/shared/systemaudiocontrol.cpp

@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QStackedLayout>
 #include <QProcess>
+#include <QTimer>
 #include "audiosourcecd.h"
 #include "audiosourcecoordinator.h"
 #include "audiosourcefile.h"
@@ -14,6 +15,11 @@
 #include "playlistview.h"
 #include "qmediaplaylist.h"
 #include "playlistmodel.h"
+#include "screensaverview.h"
+#include "mediaplayer.h"
+
+// Screensaver timeout in milliseconds (5 minutes default)
+#define SCREENSAVER_TIMEOUT_MS (5 * 60 * 1000)
 
 class MainWindow : public QMainWindow
 {
@@ -41,11 +47,23 @@ public slots:
     void showShutdownModal();
     void open();
 
+private slots:
+    void onPlaybackStateChanged(MediaPlayer::PlaybackState state);
+    void activateScreenSaver();
+    void deactivateScreenSaver();
+    void resetScreenSaverTimer();
+
 private:
     QMediaPlaylist *m_playlist = nullptr;
     PlaylistModel *m_playlistModel = nullptr;
     QProcess *shutdownProcess = nullptr;
     void shutdown();
+
+    // Screensaver related
+    ScreenSaverView *screenSaver = nullptr;
+    QTimer *screenSaverTimer = nullptr;
+    bool screenSaverActive = false;
+    MediaPlayer::PlaybackState currentPlaybackState = MediaPlayer::StoppedState;
 
 };
 
