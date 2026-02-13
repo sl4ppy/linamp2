@@ -116,6 +116,7 @@
         <file>assets/source-icon-cd.png</file>
         <file>assets/source-icon-file.png</file>
         <file>assets/source-icon-spotify.png</file>
+        <file>assets/source-icon-vban.png</file>
         <file>assets/menu-icon-x.png</file>
     </qresource>
 </RCC>

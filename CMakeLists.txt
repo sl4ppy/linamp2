@@ -24,6 +24,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/view-menu)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/view-player)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/view-playlist)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/view-screensaver)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/vban)
 
 qt_add_executable(player WIN32 MACOSX_BUNDLE
     src/audiosource-base/audiosource.cpp
@@ -83,6 +84,8 @@ qt_add_executable(player WIN32 MACOSX_BUNDLE
     src/view-screensaver/screensaverview.cpp
     src/view-screensaver/screensaverview.h
     src/view-screensaver/screensaverview.ui
+    src/vban/vbansender.cpp
+    src/vban/vbansender.h
     src/shared/scale.cpp
     src/shared/scale.h
     src/shared/systemaudiocontrol.cpp

@@ -117,6 +117,12 @@ MainWindow::MainWindow(QWidget *parent)
     connect(menu, &MainMenuView::backClicked, this, &MainWindow::showPlayer);
     connect(menu, &MainMenuView::sourceSelected, coordinator, &AudioSourceCoordinator::setSource);
 
+    // Setup VBAN sender
+    vbanSender = new VbanSender(this);
+    connect(menu, &MainMenuView::vbanToggled, vbanSender, &VbanSender::setEnabled);
+    connect(vbanSender, &VbanSender::enabledChanged, menu, &MainMenuView::setVbanEnabled);
+    menu->setVbanEnabled(vbanSender->isEnabled());
+
     // Prepare screensaver view
     screenSaver = new ScreenSaverView(this);
     screenSaver->setAttribute(Qt::WidgetAttribute::WA_StyledBackground, true);

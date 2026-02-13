@@ -17,6 +17,7 @@
 #include "playlistmodel.h"
 #include "screensaverview.h"
 #include "mediaplayer.h"
+#include "vbansender.h"
 
 // Screensaver timeout in milliseconds (5 minutes default)
 #define SCREENSAVER_TIMEOUT_MS (5 * 60 * 1000)
@@ -39,6 +40,7 @@ public:
     AudioSourcePython *btSource;
     AudioSourceCD *cdSource;
     AudioSourcePython *spotSource;
+    VbanSender *vbanSender;
 
 public slots:
     void showPlayer();
