@@ -145,7 +145,7 @@ qt_add_executable(player WIN32 MACOSX_BUNDLE
 
 target_include_directories(player PRIVATE
     /usr/include/pipewire-0.3
-    /usr/include/python3.12
+    /usr/include/python3.11
     /usr/include/spa-0.2
 )
 
@@ -163,7 +163,7 @@ target_link_libraries(player PRIVATE
     pipewire-0.3
     pulse
     pulse-simple
-    python3.12
+    python3.11
     tag
 )
 
