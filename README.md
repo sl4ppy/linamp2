@@ -30,7 +30,7 @@ All audio sources inherit from `AudioSource` (`src/audiosource-base/audiosource.
 
 ### VBAN Streaming
 
-The VBAN sender (`src/vban/`) is independent of the audio source system — it captures system audio output via its own PipeWire stream (the same approach used for the spectrum visualizer) and packetizes it as VBAN UDP packets. This means it works with all audio sources simultaneously.
+The VBAN sender (`src/vban/`) is independent of the audio source system — it manages an external `vban_emitter` process that captures system audio from a PulseAudio monitor source and sends VBAN UDP packets over the network. This means it works with all audio sources simultaneously. Requires a PulseAudio null sink (`vban_out`) and a combined sink routing audio to both the local output and VBAN (see DEPLOYMENT.md for setup).
 
 Configuration is stored in `~/.config/Rod/Linamp.conf` under the `[vban]` group:
 
@@ -97,6 +97,11 @@ Key concern: proper reference counting (`Py_INCREF`/`Py_DECREF`) at the C/Python
 - VLC
 - libdiscid0
 - libcdio, libiso9660
+
+### System (runtime, for VBAN)
+
+- `vban_emitter` ([quiniouben/vban](https://github.com/quiniouben/vban)) compiled with PulseAudio backend
+- PulseAudio with `module-null-sink` and `module-combine-sink`
 
 ## Development
 

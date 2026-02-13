@@ -138,6 +138,41 @@ ps aux | grep "build/player"
 
 ### VBAN network streaming
 
+VBAN streaming requires PulseAudio and `vban_emitter`. Linamp manages the `vban_emitter` process directly — when VBAN is enabled, Linamp starts it; when disabled, Linamp stops it.
+
+#### PulseAudio setup
+
+VBAN requires a null sink (for capturing audio) and a combined sink (to route audio to both local output and VBAN simultaneously). Add the following to `/etc/pulse/system.pa`:
+
+```
+load-module module-null-sink sink_name=vban_out sink_properties=device.description="VBAN_Stream_Output" rate=44100
+load-module module-combine-sink sink_name=combined sink_properties=device.description="Combined_Output" slaves=alsa_output.platform-snd_aloop.0.analog-stereo,vban_out
+set-default-sink combined
+```
+
+Disable suspend-on-idle to prevent the sink from pausing during silence:
+
+```
+# Comment out this line in system.pa:
+#load-module module-suspend-on-idle
+```
+
+#### Installing vban_emitter
+
+```bash
+sudo apt-get install -y pulseaudio pulseaudio-utils libpulse-dev build-essential autoconf automake libtool git
+git clone https://github.com/quiniouben/vban.git /tmp/vban_build
+cd /tmp/vban_build
+./autogen.sh
+./configure --enable-pulseaudio --disable-jack --disable-alsa
+make && sudo make install
+rm -rf /tmp/vban_build
+```
+
+The binary is installed to `/usr/local/bin/vban_emitter`.
+
+#### Linamp configuration
+
 VBAN settings are stored in `~/.config/Rod/Linamp.conf`. This file is created automatically when VBAN is first toggled from the app menu. To configure manually:
 
 ```ini
@@ -156,6 +191,10 @@ streamName=Linamp
 | `streamName` | `Linamp` | Stream name visible in VBAN receivers |
 
 VBAN can also be toggled on/off from the Sources menu inside the app.
+
+#### Receiver notes
+
+On the receiving end (e.g., Voicemeeter Banana, VB-Audio VBAN Receptor), set the Net Quality to **Fast** or **Medium** rather than Optimal for best results with Raspberry Pi.
 
 ### Display scaling
 
