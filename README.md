@@ -1,78 +1,164 @@
-# Linamp player
+# Linamp
 
-Music player app for Linamp - Your favorite music player of the 90s, but in real life.
+Your favorite music player of the 90s, but in real life.
+
+Linamp is a retro Winamp-inspired music player for Linux/Raspberry Pi, built with C++/Qt 6. It features a classic skin-based UI with spectrum visualizer, and supports multiple audio sources through a pluggable architecture.
+
+## Features
+
+- **Local file playback** — MP3, FLAC, WAV, OGG, and other formats via Qt Multimedia with TagLib metadata
+- **CD audio** — Disc playback with MusicBrainz track/album lookup, powered by VLC and libdiscid
+- **Bluetooth receiver** — Act as a Bluetooth audio sink for phones/tablets
+- **Spotify Connect** — Appear as a Spotify Connect device on the local network
+- **VBAN network streaming** — Send audio output over the network via VBAN protocol to Voicemeeter Banana or other VBAN-compatible receivers
+- **Spectrum visualizer** — Real-time FFT-based visualization captured from PipeWire system audio output
+- **Screensaver** — Clock display after 5 minutes of idle (no playback)
+- **Scalable UI** — 1x through 4x DPI scaling with per-scale stylesheets
+
+## Architecture
+
+### Audio Sources
+
+All audio sources inherit from `AudioSource` (`src/audiosource-base/audiosource.h`), which defines the signal/slot interface for playback control, metadata, spectrum data, and state changes. `AudioSourceCoordinator` (`src/audiosource-coordinator/`) manages switching between sources and routes volume/balance control.
+
+| Source | Directory | Description |
+|---|---|---|
+| File | `src/audiosourcefile/` | Local file playback via Qt Multimedia. Custom `QMediaPlaylist`, TagLib for metadata |
+| CD | `src/audiosourcecd/` | CD playback via embedded Python. VLC decoding, libdiscid + MusicBrainz metadata |
+| Bluetooth | `src/audiosourcepython/` | Bluetooth A2DP sink via embedded Python (`python/linamp/btplayer/`) |
+| Spotify | `src/audiosourcepython/` | Spotify Connect via embedded Python (`python/linamp/spotifyplayer/`) |
+
+### VBAN Streaming
+
+The VBAN sender (`src/vban/`) is independent of the audio source system — it captures system audio output via its own PipeWire stream (the same approach used for the spectrum visualizer) and packetizes it as VBAN UDP packets. This means it works with all audio sources simultaneously.
+
+Configuration is stored in `~/.config/Rod/Linamp.conf` under the `[vban]` group:
+
+| Key | Default | Description |
+|---|---|---|
+| `enabled` | `false` | Auto-start VBAN on launch |
+| `destinationIp` | `255.255.255.255` | Target IP address (broadcast by default) |
+| `port` | `6980` | UDP port |
+| `streamName` | `Linamp` | VBAN stream name visible in Voicemeeter |
+
+Toggle VBAN from the Sources menu in the app. The button turns green when active. State is persisted across restarts.
+
+### View System
+
+Views are managed via `QStackedLayout` in `MainWindow` (`src/view-basewindow/mainwindow.h`):
+
+| Index | View | Description |
+|---|---|---|
+| 0 | `PlayerView` | Main playback UI: spectrum visualizer, track info, transport controls |
+| 1 | `PlaylistView` | File browser and playlist management |
+| 2 | `MainMenuView` | Audio source selection and VBAN toggle |
+| 3 | `ScreenSaverView` | Clock display, activates after 5 min idle |
+
+Two base window variants: `DesktopBaseWindow` (windowed with title bar) and `EmbeddedBaseWindow` (fullscreen for Raspberry Pi).
+
+### Python Integration
+
+`AudioSourcePython` (`src/audiosourcepython/`) manages the embedded Python interpreter and uses the Python C API to call into modules in `python/linamp/`. The CD, Bluetooth, and Spotify sources are all Python-backed. Mock implementations for testing without hardware are in `python/linamp-mock/`.
+
+Key concern: proper reference counting (`Py_INCREF`/`Py_DECREF`) at the C/Python boundary — memory leaks here have been a recurring issue.
+
+### Shared Utilities
+
+`src/shared/` contains:
+- `fft.h` — FFT for spectrum analysis
+- `systemaudiocontrol.h` — ALSA volume/balance control
+- `scale.h` — `UI_SCALE` constant for DPI scaling
+- `linampslider.h` — Custom slider widget
+- `util.h` — General utilities (audio file filters, etc.)
 
 ## Requirements
 
-- Qt 6 with Qt Multimedia
-- taglib 1.11.1 or newer
-- libasound2-dev
-- libpipewire-0.3-dev
-- vlc
-- libiso9660-dev
-- libcdio-dev
-- libcdio-utils
-- swig
-- python3-pip
-- python3-full
-- python3-dev
-- python3-dbus-next
+### C++ (build-time)
+
+- Qt 6 (Core, Gui, Widgets, Multimedia, MultimediaWidgets, Concurrent, DBus, Network)
+- TagLib (`libtag1-dev`)
+- ALSA (`libasound2-dev`)
+- PipeWire 0.3 (`libpipewire-0.3-dev`, `libspa-0.2-dev`)
+- PulseAudio (`libpulse-dev`)
+- Python 3 C API (`python3-dev`)
+- CMake 3.16+
+
+### Python (runtime, for CD/Bluetooth/Spotify)
+
+- python-vlc
+- python-libdiscid
+- musicbrainzngs
+- pycdio
+- dbus-next
+
+### System (runtime, for CD)
+
+- VLC
 - libdiscid0
+- libcdio, libiso9660
 
 ## Development
 
 ### Setup
 
-The exact steps you need to take to setup your dev environment will depend on your OS. Currently I'm using Debian Bookworm as my dev environment as it's very close to the target device environment (Raspberry Pi with DietPi, which is based on Debian Bookworm).
-
-The instructions here are for Debian Bookworm:
+The target deployment environment is Raspberry Pi with DietPi (Debian Bookworm). These instructions are for Debian/Ubuntu-based systems:
 
 ```bash
-# Install Qt, Qt Multimedia and Qt Creator
+# Install Qt 6, build tools
 sudo apt-get install build-essential qt6-base-dev qt6-base-dev-tools qt6-multimedia-dev qtcreator cmake -y
 
-# Install third party library dependencies
-sudo apt-get install libtag1-dev libasound2-dev libpulse-dev libpipewire-0.3-dev libdbus-1-dev -y
+# Install C++ library dependencies
+sudo apt-get install libtag1-dev libasound2-dev libpulse-dev libpipewire-0.3-dev libspa-0.2-dev libdbus-1-dev -y
 
-# Install dependencies for Python (for CD player functionality)
+# Install Python dependencies (for CD/Bluetooth/Spotify)
 sudo apt-get install vlc libiso9660-dev libcdio-dev libcdio-utils swig python3-pip python3-full python3-dev python3-dbus-next libdiscid0 libdiscid-dev -y
 
-# Create Python venv and install Python dependencies (for CD player functionality)
-## IMPORTANT: Make sure you are on the folder where you cloned this repo before running the following commands:
+# Create Python venv and install Python packages
+# IMPORTANT: Run from the repository root
 python3 -m venv venv
 source venv/bin/activate
 pip install -r python/requirements.txt
 ```
 
-### Build and run
+Or use the setup script after cmake:
 
-**Using Qt Creator:**
+```bash
+cmake CMakeLists.txt
+./setup.sh
+```
 
-1. Open this project with Qt Creator (open CMakeLists.txt in Qt Creator)
-2. Qt Creator should guide you setting up your paths and settings for building the proyect in your machine
-3. You should be able to click the green "Play" icon in Qt Creator to build and run the app
+### Build and Run
 
 **From the console:**
 
 ```bash
-# From inside this repository:
-## Generate build configuration, you only need to run this once:
+# Generate build config (first time only)
 cmake CMakeLists.txt
-## Setup python dependencies, you only need to run this once:
-./setup.sh
 
-## Compile the project
+# Build
 make
 
-## Run the app
+# Run (activates Python venv and sets PYTHONPATH)
 ./start.sh
 ```
 
-**Tip:** If you want to see the app in a window instead of full screen, comment out the following line in `main.cpp`: `//window.setWindowState(Qt::WindowFullScreen);`
+**Using Qt Creator:**
 
-### Building a Debian package
+1. Open `CMakeLists.txt` in Qt Creator
+2. Configure the kit when prompted
+3. Click the green Play button to build and run
 
-Install and setup [sbuild](https://wiki.debian.org/sbuild) running the following commands:
+**Tip:** To run windowed instead of fullscreen, comment out `window.setWindowState(Qt::WindowFullScreen)` in `src/main.cpp`.
+
+### CMake Structure
+
+Build target is `player`. Output binary: `./build/player`. CMake auto-handles MOC/UIC/RCC. All source modules are listed explicitly in `CMakeLists.txt` — new source files must be added there manually.
+
+Note: `target_include_directories` in CMakeLists.txt hardcodes Python 3.11 include paths for the Raspberry Pi target. If building locally with a different Python version (e.g. 3.12 on Ubuntu 24.04), you'll need to adjust the path temporarily.
+
+### Building a Debian Package
+
+Install and setup [sbuild](https://wiki.debian.org/sbuild):
 
 ```bash
 sudo apt-get install sbuild schroot debootstrap apt-cacher-ng devscripts piuparts dh-python dh-cmake
@@ -108,31 +194,72 @@ $autopkgtest_opts = [ '--', 'schroot', '%r-%a-sbuild' ];
 1;
 EOF
 sudo sbuild-adduser $LOGNAME
-newgrp sbuild
+newgrp sbuild
 sudo ln -sf ~/.sbuildrc /root/.sbuildrc
 sudo sbuild-createchroot --include=eatmydata,ccache bookworm /srv/chroot/bookworm-amd64-sbuild http://127.0.0.1:3142/ftp.us.debian.org/debian
 ```
 
-Then simply run `sbuild --no-run-piuparts --lintian-opt="--suppress-tags=bad-distribution-in-changes-file"` in the cloned repository directory. The `.deb` packages will be in your home directory afterwards if everything went well.
+Then build:
 
-You can install the newly built packages with the following command (replace placeholders accordingly):
+```bash
+sbuild --no-run-piuparts --lintian-opt="--suppress-tags=bad-distribution-in-changes-file"
+```
+
+Install the resulting package:
 
 ```bash
 sudo apt install ./linamp_[version]_[arch].deb
 ```
 
-### Known issues
+## Project Structure
 
-- File picker and playlist view doesn't correctly work with mouse input, clicks are not detected (touch works fine). There was a bug with touch input which got fixed by disabling certain mouse events, but this had the side effect that if you don't have a touch screen, you cannot quite use it with a mouse. WORKAROUND: Whenever you want to click something inside the file browser or playlist, click and hold for about one second, this will trigger the click event correctly.
-- In order for the Python integration (and thus, the CD player functionality) to work and not crash, you need to run the app inside the Python venv, you can use the "start.sh" script as a helper to set everything up for you and run it. However, because Qt Creator by default will directly run the player executable outside of the venv, the cd player will crash. I'm yet to find a better way of running it inside Qt Creator, other than telling it to run the "start.sh" script instead of the executable.
+```
+linamp2/
+  assets/              # Icons, images, fonts (embedded via uiassets.qrc)
+  debian/              # Debian packaging files
+  python/
+    linamp/            # Python audio source modules
+      baseplayer/      # Base class for Python audio sources
+      btplayer/        # Bluetooth A2DP sink
+      cdplayer.py      # CD playback
+      spotifyplayer/   # Spotify Connect
+    linamp-mock/       # Mock implementations for testing without hardware
+    requirements.txt   # Python pip dependencies
+  src/
+    audiosource-base/  # AudioSource abstract base class + PipeWire spectrum capture
+    audiosource-coordinator/  # Source switching and volume routing
+    audiosourcecd/     # CD audio source
+    audiosourcefile/   # Local file audio source + custom MediaPlayer
+    audiosourcepython/ # Python-backed audio source wrapper
+    shared/            # FFT, ALSA control, scaling, utilities
+    vban/              # VBAN network audio streaming
+    view-basewindow/   # MainWindow, desktop/embedded base windows
+    view-menu/         # Source selection menu + VBAN toggle
+    view-player/       # Main playback UI, spectrum widget, scrolling text
+    view-playlist/     # File browser, playlist model, media playlist
+    view-screensaver/  # Idle clock display
+    main.cpp           # Application entry point
+  styles/              # Scale-variant QSS stylesheets (1x-4x)
+  uiassets.qrc         # Qt resource file
+  CMakeLists.txt       # CMake build configuration
+  setup.sh             # First-time Python venv setup
+  start.sh             # Run script (activates venv, sets PYTHONPATH)
+```
 
-### Debugging memory leaks:
+## Known Issues
 
-- Install valgrind
-- In Qt Creator, in the menu bar, click Analyze -> Valgrind Memory Analizer
-- Wait for the app to start (it will be slow), use it and close it, you will get the results then.
+- **Mouse input in file browser/playlist:** Clicks are not detected (touch works fine). This is a side effect of a fix for a touch input bug. **Workaround:** Click and hold for about one second to trigger the click event.
+- **Qt Creator and Python venv:** Qt Creator runs the executable directly, outside the Python venv, which causes CD/Bluetooth/Spotify sources to crash. Configure Qt Creator to run `start.sh` instead, or set up the venv environment variables manually in the run configuration.
 
-### Links that I've found useful and/or got inspiration from:
+## Debugging
+
+### Memory leaks (Valgrind)
+
+1. Install valgrind
+2. In Qt Creator: Analyze > Valgrind Memory Analyzer
+3. Use the app, then close it to see results
+
+### Useful references
 
 - https://taglib.org/
 - https://github.com/Znurre/QtMixer/blob/b222c49c8f202981e5104bd65c8bf49e73b229c1/QAudioDecoderStream.cpp#L153
