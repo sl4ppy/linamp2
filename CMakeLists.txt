@@ -24,6 +24,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/view-menu)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/view-player)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/view-playlist)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/view-screensaver)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/view-avs)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/view-avs/effects)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/vban)
 
 qt_add_executable(player WIN32 MACOSX_BUNDLE
@@ -84,6 +86,47 @@ qt_add_executable(player WIN32 MACOSX_BUNDLE
     src/view-screensaver/screensaverview.cpp
     src/view-screensaver/screensaverview.h
     src/view-screensaver/screensaverview.ui
+    src/view-avs/avsframebuffer.cpp
+    src/view-avs/avsframebuffer.h
+    src/view-avs/avsaudiodata.cpp
+    src/view-avs/avsaudiodata.h
+    src/view-avs/avseffect.h
+    src/view-avs/avsengine.cpp
+    src/view-avs/avsengine.h
+    src/view-avs/avsview.cpp
+    src/view-avs/avsview.h
+    src/view-avs/effects/avsclearscreen.cpp
+    src/view-avs/effects/avsclearscreen.h
+    src/view-avs/effects/avsfadeout.cpp
+    src/view-avs/effects/avsfadeout.h
+    src/view-avs/effects/avssuperscope.cpp
+    src/view-avs/effects/avssuperscope.h
+    src/view-avs/effects/avsmovement.cpp
+    src/view-avs/effects/avsmovement.h
+    src/view-avs/effects/avscolormodifier.cpp
+    src/view-avs/effects/avscolormodifier.h
+    src/view-avs/effects/avsonbeatclear.cpp
+    src/view-avs/effects/avsonbeatclear.h
+    src/view-avs/effects/avsgrain.cpp
+    src/view-avs/effects/avsgrain.h
+    src/view-avs/effects/avsmirror.cpp
+    src/view-avs/effects/avsmirror.h
+    src/view-avs/effects/avsring.cpp
+    src/view-avs/effects/avsring.h
+    src/view-avs/effects/avsstarfield.cpp
+    src/view-avs/effects/avsstarfield.h
+    src/view-avs/effects/avswater.cpp
+    src/view-avs/effects/avswater.h
+    src/view-avs/effects/avsdynamicmovement.cpp
+    src/view-avs/effects/avsdynamicmovement.h
+    src/view-avs/effects/avsblur.cpp
+    src/view-avs/effects/avsblur.h
+    src/view-avs/effects/avsmosaic.cpp
+    src/view-avs/effects/avsmosaic.h
+    src/view-avs/effects/avsbufferblend.cpp
+    src/view-avs/effects/avsbufferblend.h
+    src/view-avs/effects/avsclock.cpp
+    src/view-avs/effects/avsclock.h
     src/vban/vbansender.cpp
     src/vban/vbansender.h
     src/shared/scale.cpp
@@ -102,7 +145,7 @@ qt_add_executable(player WIN32 MACOSX_BUNDLE
 
 target_include_directories(player PRIVATE
     /usr/include/pipewire-0.3
-    /usr/include/python3.11
+    /usr/include/python3.12
     /usr/include/spa-0.2
 )
 
@@ -120,7 +163,7 @@ target_link_libraries(player PRIVATE
     pipewire-0.3
     pulse
     pulse-simple
-    python3.11
+    python3.12
     tag
 )
 

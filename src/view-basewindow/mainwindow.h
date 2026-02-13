@@ -16,6 +16,7 @@
 #include "qmediaplaylist.h"
 #include "playlistmodel.h"
 #include "screensaverview.h"
+#include "avsview.h"
 #include "mediaplayer.h"
 #include "vbansender.h"
 
@@ -41,11 +42,13 @@ public:
     AudioSourceCD *cdSource;
     AudioSourcePython *spotSource;
     VbanSender *vbanSender;
+    AvsView *avsView;
 
 public slots:
     void showPlayer();
     void showPlaylist();
     void showMenu();
+    void showAvs();
     void showShutdownModal();
     void open();
 
@@ -53,6 +56,7 @@ private slots:
     void onPlaybackStateChanged(MediaPlayer::PlaybackState state);
     void activateScreenSaver();
     void deactivateScreenSaver();
+    void deactivateAvs();
     void resetScreenSaverTimer();
 
 private:

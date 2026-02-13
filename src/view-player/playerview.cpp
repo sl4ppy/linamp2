@@ -8,11 +8,13 @@
 #include <QAudioDevice>
 #include <QAudioOutput>
 #include <QDir>
+#include <QEvent>
 #include <QFileDialog>
 #include <QMediaDevices>
 #include <QMediaFormat>
 #include <QMediaMetaData>
 #include <QMessageBox>
+#include <QMouseEvent>
 #include <QStandardPaths>
 #include <QFontDatabase>
 
@@ -95,6 +97,9 @@ PlayerView::PlayerView(QWidget *parent, ControlButtonsWidget *ctlBtns) :
     spectrumLayout->setContentsMargins(0, 0, 0, 0);
     spectrumLayout->setSpacing(0);
     ui->spectrumContainer->setLayout(spectrumLayout);
+
+    // Install event filter on visualization area for AVS click detection
+    ui->visualizationFrame->installEventFilter(this);
 
     // Setup message functionality
     messageTimer = new QTimer(this);
@@ -387,4 +392,13 @@ void PlayerView::setSourceLabel(QString label)
         fLabel.append("\n");
     }
     ui->inputLabel->setText(fLabel);
+}
+
+bool PlayerView::eventFilter(QObject *obj, QEvent *event)
+{
+    if (obj == ui->visualizationFrame && event->type() == QEvent::MouseButtonPress) {
+        emit visualizationClicked();
+        return true;
+    }
+    return QWidget::eventFilter(obj, event);
 }

@@ -64,6 +64,10 @@ signals:
     void shuffleClicked();
     void repeatClicked();
     void menuClicked();
+    void visualizationClicked();
+
+protected:
+    bool eventFilter(QObject *obj, QEvent *event) override;
 
 private:
     Ui::PlayerView *ui;

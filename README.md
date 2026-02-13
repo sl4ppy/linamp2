@@ -12,7 +12,7 @@ Linamp is a retro Winamp-inspired music player for Linux/Raspberry Pi, built wit
 - **Spotify Connect** — Appear as a Spotify Connect device on the local network
 - **VBAN network streaming** — Send audio output over the network via VBAN protocol to Voicemeeter Banana or other VBAN-compatible receivers
 - **Spectrum visualizer** — Real-time FFT-based visualization captured from PipeWire system audio output
-- **Screensaver** — Clock display after 5 minutes of idle (no playback)
+- **Screensaver** — Neon digital or glow-in-the-dark analog clock after 5 minutes of idle (randomly selected)
 - **Scalable UI** — 1x through 4x DPI scaling with per-scale stylesheets
 
 ## Architecture
@@ -52,7 +52,8 @@ Views are managed via `QStackedLayout` in `MainWindow` (`src/view-basewindow/mai
 | 0 | `PlayerView` | Main playback UI: spectrum visualizer, track info, transport controls |
 | 1 | `PlaylistView` | File browser and playlist management |
 | 2 | `MainMenuView` | Audio source selection and VBAN toggle |
-| 3 | `ScreenSaverView` | Clock display, activates after 5 min idle |
+| 3 | `ScreenSaverView` | Neon digital or analog clock, activates after 5 min idle |
+| 4 | `AvsView` | AVS-style visualization (click spectrum to activate) |
 
 Two base window variants: `DesktopBaseWindow` (windowed with title bar) and `EmbeddedBaseWindow` (fullscreen for Raspberry Pi).
 

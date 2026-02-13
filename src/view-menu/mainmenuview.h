@@ -23,6 +23,7 @@ signals:
     void sourceSelected(int source);
     void backClicked();
     void vbanToggled(bool enabled);
+    void avsClicked();
 
 private:
     Ui::MainMenuView *ui;

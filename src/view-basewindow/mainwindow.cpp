@@ -116,6 +116,7 @@ MainWindow::MainWindow(QWidget *parent)
     menu->setAttribute(Qt::WidgetAttribute::WA_StyledBackground,  true);
     connect(menu, &MainMenuView::backClicked, this, &MainWindow::showPlayer);
     connect(menu, &MainMenuView::sourceSelected, coordinator, &AudioSourceCoordinator::setSource);
+    connect(menu, &MainMenuView::avsClicked, this, &MainWindow::showAvs);
 
     // Setup VBAN sender
     vbanSender = new VbanSender(this);
@@ -128,12 +129,33 @@ MainWindow::MainWindow(QWidget *parent)
     screenSaver->setAttribute(Qt::WidgetAttribute::WA_StyledBackground, true);
     connect(screenSaver, &ScreenSaverView::userActivityDetected, this, &MainWindow::deactivateScreenSaver);
 
+    // Prepare AVS visualization view
+    avsView = new AvsView(this);
+    avsView->setAttribute(Qt::WidgetAttribute::WA_StyledBackground, true);
+    connect(avsView, &AvsView::userActivityDetected, this, &MainWindow::deactivateAvs);
+
+    // Connect all audio sources' dataEmitted to AVS view (only active source emits)
+    connect(fileSource, &AudioSource::dataEmitted, avsView, &AvsView::setAudioData);
+    connect(btSource, &AudioSource::dataEmitted, avsView, &AvsView::setAudioData);
+    connect(cdSource, &AudioSource::dataEmitted, avsView, &AvsView::setAudioData);
+    connect(spotSource, &AudioSource::dataEmitted, avsView, &AvsView::setAudioData);
+
+    // Connect metadata changes to AVS view for track info OSD
+    connect(fileSource, &AudioSource::metadataChanged, avsView, &AvsView::setMetadata);
+    connect(btSource, &AudioSource::metadataChanged, avsView, &AvsView::setMetadata);
+    connect(cdSource, &AudioSource::metadataChanged, avsView, &AvsView::setMetadata);
+    connect(spotSource, &AudioSource::metadataChanged, avsView, &AvsView::setMetadata);
+
+    // Connect visualization click from player view
+    connect(player, &PlayerView::visualizationClicked, this, &MainWindow::showAvs);
+
     // Prepare navigation stack
     viewStack = new QStackedLayout;
     viewStack->addWidget(playerWindow);     // Index 0
     viewStack->addWidget(playlistWindow);   // Index 1
     viewStack->addWidget(menu);             // Index 2
     viewStack->addWidget(screenSaver);      // Index 3
+    viewStack->addWidget(avsView);          // Index 4
 
     // Final UI setup and show
     QVBoxLayout *centralLayout = new QVBoxLayout;
@@ -193,6 +215,12 @@ void MainWindow::showMenu()
 {
     viewStack->setCurrentIndex(2);
     resetScreenSaverTimer();
+}
+
+void MainWindow::showAvs()
+{
+    avsView->start();
+    viewStack->setCurrentIndex(4);
 }
 
 void MainWindow::showShutdownModal()
@@ -280,6 +308,7 @@ void MainWindow::activateScreenSaver()
 
     qDebug() << "Activating screensaver";
     screenSaverActive = true;
+    screenSaver->start();
     viewStack->setCurrentIndex(3); // Show screensaver (index 3)
 }
 
@@ -289,6 +318,13 @@ void MainWindow::deactivateScreenSaver()
 
     qDebug() << "Deactivating screensaver";
     screenSaverActive = false;
+    viewStack->setCurrentIndex(0); // Return to player view
+    resetScreenSaverTimer();
+}
+
+void MainWindow::deactivateAvs()
+{
+    avsView->stop();
     viewStack->setCurrentIndex(0); // Return to player view
     resetScreenSaverTimer();
 }
