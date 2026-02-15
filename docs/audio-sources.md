@@ -1,5 +1,7 @@
 # Audio Source System
 
+![Source selection menu](../screenshots/menu-view.png)
+
 ## AudioSource Abstract Base Class
 
 **File:** `src/audiosource-base/audiosource.h`

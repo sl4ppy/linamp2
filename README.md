@@ -4,6 +4,8 @@ Your favorite music player of the 90s, but in real life.
 
 Linamp is a retro Winamp-inspired music player for Linux/Raspberry Pi, built with C++/Qt 6. It features a classic skin-based UI with spectrum visualizer, and supports multiple audio sources through a pluggable architecture.
 
+![Player view with active playback](screenshots/player-playing.png)
+
 ## Features
 
 - **Local file playback** — MP3, FLAC, WAV, OGG, and other formats via Qt Multimedia with TagLib metadata
@@ -56,6 +58,24 @@ Views are managed via `QStackedLayout` in `MainWindow` (`src/view-basewindow/mai
 | 4 | `AvsView` | AVS-style visualization (click spectrum to activate) |
 
 Two base window variants: `DesktopBaseWindow` (windowed with title bar) and `EmbeddedBaseWindow` (fullscreen for Raspberry Pi).
+
+| | |
+|---|---|
+| ![Player](screenshots/player-playing.png) | ![Playlist](screenshots/playlist-view.png) |
+| Player view with spectrum visualizer | Playlist and file browser |
+| ![Sources menu](screenshots/menu-view.png) | ![Screensaver](screenshots/screensaver-digital.png) |
+| Audio source selection menu | Digital clock screensaver |
+
+#### AVS Visualizations
+
+Click the spectrum visualizer to enter fullscreen AVS mode. Cycle through effects with left/right arrow keys.
+
+| | |
+|---|---|
+| ![Scope](screenshots/avs-scope.png) | ![Mirror Scope](screenshots/avs-mirror-scope.png) |
+| Oscilloscope | Mirror Scope |
+| ![Neon Ring](screenshots/avs-neon-ring.png) | ![Water World](screenshots/avs-water-world.png) |
+| Neon Ring | Water World |
 
 ### Python Integration
 

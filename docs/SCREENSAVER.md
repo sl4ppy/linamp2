@@ -4,6 +4,8 @@
 
 The screensaver activates after 5 minutes of idle time (no playback and no user interaction). It randomly selects between two clock modes each time it activates: a floating neon digital clock or a glow-in-the-dark analog clock. Both modes share rainbow hue cycling and a breathing intensity animation. Any mouse click, key press, or music playback immediately deactivates it.
 
+![Digital clock screensaver](../screenshots/screensaver-digital.png)
+
 ## Clock Modes
 
 ### Digital

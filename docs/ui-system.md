@@ -1,5 +1,12 @@
 # UI & View System
 
+| | |
+|---|---|
+| ![Player](../screenshots/player-playing.png) | ![Playlist](../screenshots/playlist-view.png) |
+| Player view | Playlist view |
+| ![Menu](../screenshots/menu-view.png) | ![Screensaver](../screenshots/screensaver-digital.png) |
+| Source selection menu | Screensaver |
+
 ## Window Hierarchy
 
 ```
