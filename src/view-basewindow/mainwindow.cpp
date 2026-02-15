@@ -287,6 +287,7 @@ void MainWindow::open()
 
 void MainWindow::onPlaybackStateChanged(MediaPlayer::PlaybackState state)
 {
+    if (state == currentPlaybackState) return; // Ignore repeated emissions of same state
     currentPlaybackState = state;
 
     if (state == MediaPlayer::PlayingState) {
