@@ -220,19 +220,15 @@ MainMenuView (background #333350)
 
 ## ScreenSaverView
 
-**Files:** `src/view-screensaver/screensaverview.h`, `.cpp`, `.ui`
+**Files:** `src/view-screensaver/screensaverview.h`, `.cpp`, `.ui`, `clockthemes.h`
 
-Clock screensaver that activates after 5 minutes of idle time. Randomly selects between two modes on each activation. See [SCREENSAVER.md](SCREENSAVER.md) for full details.
+Clock screensaver with 7 themed clock faces (6 analog watch styles + neon digital), randomly selected on each activation. See [SCREENSAVER.md](SCREENSAVER.md) for full details.
 
-### Clock Modes
+### Themes
 
-**Digital** — Floating neon clock with time, AM/PM, and date. Bounces off screen edges like a DVD screensaver. Rendered with 3-layer neon glow (outer, mid, core) via QPainterPath strokes.
+6 analog themes (Luxury, Aviator, Diver, Minimalist, Chronograph, Neon Retro) each define hand shapes, tick markers, colors, and decorative elements via `ClockTheme` in `clockthemes.h`. The analog dial is circular and bounces around the screen. A 7th theme renders the neon digital clock (floating time/date text).
 
-**Analog** — Glow-in-the-dark watch face that fills the rectangular display. 60 tick marks radiate from the rectangle edges (major at 12/3/6/9, minor at other hours, small at each minute). Hour and minute hands extend from center toward edges. A red rectangular second marker sweeps the perimeter. Rendered with offscreen bloom: elements painted to a 1/4-size buffer, Gaussian-approximation blur applied, then composited as a soft glow under the sharp core elements.
-
-### Shared Visual Effects
-
-Both modes share rainbow hue cycling (~60s full cycle) and a breathing intensity animation (~3.5s cycle).
+Glow rendering uses an offscreen buffer sized to the dial bounding box at 1/4 resolution, blurred and composited as a soft bloom under sharp core elements.
 
 ### Timeout Configuration
 
@@ -244,7 +240,7 @@ Both modes share rainbow hue cycling (~60s full cycle) and a breathing intensity
 
 - Music must not be playing (StoppedState or PausedState)
 - No user interaction for `SCREENSAVER_TIMEOUT_MS`
-- `MainWindow::activateScreenSaver()` calls `screenSaver->start()` to randomize mode
+- `MainWindow::activateScreenSaver()` calls `screenSaver->start()` to select random theme
 
 ### Signal
 

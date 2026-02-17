@@ -46,7 +46,7 @@ Views are managed via `QStackedLayout` in `MainWindow` (`src/view-basewindow/mai
 - Index 0: `PlayerView` — main playback UI with spectrum visualizer, track info, controls
 - Index 1: `PlaylistView` — file browser and playlist management
 - Index 2: `MainMenuView` — settings and audio source selection
-- Index 3: `ScreenSaverView` — clock display after 5 min idle (`SCREENSAVER_TIMEOUT_MS`)
+- Index 3: `ScreenSaverView` — themed clock faces (7 themes: 6 analog watch styles + digital) after 5 min idle (`SCREENSAVER_TIMEOUT_MS`)
 
 Two base window variants exist: `DesktopBaseWindow` (windowed with title bar) and `EmbeddedBaseWindow` (fullscreen for Raspberry Pi).
 

@@ -83,6 +83,7 @@ qt_add_executable(player WIN32 MACOSX_BUNDLE
     src/view-menu/mainmenuview.cpp
     src/view-menu/mainmenuview.h
     src/view-menu/mainmenuview.ui
+    src/view-screensaver/clockthemes.h
     src/view-screensaver/screensaverview.cpp
     src/view-screensaver/screensaverview.h
     src/view-screensaver/screensaverview.ui

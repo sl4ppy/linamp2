@@ -5,7 +5,7 @@
 #include <QTimer>
 #include <QDateTime>
 #include <QImage>
-#include <QLineF>
+#include "clockthemes.h"
 
 namespace Ui {
 class ScreenSaverView;
@@ -40,7 +40,7 @@ private:
     QTimer *m_animTimer = nullptr;
     ClockMode m_clockMode = Digital;
 
-    // Clock text
+    // Clock text (digital mode)
     QString m_timeStr;
     QString m_ampm;
     QString m_dateStr;
@@ -49,20 +49,32 @@ private:
     // Painting helpers
     void paintDigitalClock(QPainter &painter);
     void paintAnalogClock(QPainter &painter);
-    void precomputeAnalogGeometry();
 
-    // Precomputed tick geometry (batched by weight class)
-    QLineF m_majorTicks[4];   // 12, 3, 6, 9
-    QLineF m_minorTicks[8];   // other hour marks
-    QLineF m_minuteTicks[48]; // minute marks
+    // Themed analog clock drawing methods
+    void drawDialBackground(QPainter &p, float cx, float cy, float radius, const ClockTheme &theme);
+    void drawDecorativeRings(QPainter &p, float cx, float cy, float radius, const ClockTheme &theme);
+    void drawTicks(QPainter &p, float cx, float cy, float radius, const ClockTheme &theme);
+    void drawSingleTick(QPainter &p, float cx, float cy, float radius,
+                        float angle, TickShape shape, float size,
+                        const QColor &color, const ClockTheme &theme);
+    void drawNumerals(QPainter &p, float cx, float cy, float radius, const ClockTheme &theme);
+    void drawHand(QPainter &p, float cx, float cy, float radius,
+                  float angleDeg, HandShape shape, float lengthFrac, float widthFrac,
+                  const QColor &color, bool outlineOnly, bool drawCounterweight = false,
+                  float counterweightLen = 0.0f);
+    void drawCenterPin(QPainter &p, float cx, float cy, float radius, const ClockTheme &theme);
+    QColor applyHueCycle(const QColor &color, float hueShift) const;
 
-    // Pre-allocated glow buffers (eliminates per-frame heap allocation)
+    // Theme state
+    ClockTheme m_currentTheme;
+    int m_themeIndex = 0;
+
+    // Pre-allocated glow buffers
     QImage m_glowBuffer;
     QImage m_glowTmp;
-    int m_cachedW = 0;
-    int m_cachedH = 0;
+    int m_cachedGlowSize = 0;
 
-    // Floating position
+    // Floating position (shared between digital and analog modes)
     float m_posX = -1;
     float m_posY = -1;
     float m_velX = 0.45f;
