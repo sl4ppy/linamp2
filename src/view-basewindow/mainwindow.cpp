@@ -149,6 +149,11 @@ MainWindow::MainWindow(QWidget *parent)
     // Connect visualization click from player view
     connect(player, &PlayerView::visualizationClicked, this, &MainWindow::showAvs);
 
+    // Prepare Geiss visualizer view
+    geissVisualizer = new GeissWidget(this);
+    geissVisualizer->setAttribute(Qt::WidgetAttribute::WA_StyledBackground, true);
+    connect(geissVisualizer, &GeissWidget::userActivityDetected, this, &MainWindow::deactivateScreenSaver);
+
     // Prepare navigation stack
     viewStack = new QStackedLayout;
     viewStack->addWidget(playerWindow);     // Index 0
@@ -156,6 +161,7 @@ MainWindow::MainWindow(QWidget *parent)
     viewStack->addWidget(menu);             // Index 2
     viewStack->addWidget(screenSaver);      // Index 3
     viewStack->addWidget(avsView);          // Index 4
+    viewStack->addWidget(geissVisualizer);  // Index 5
 
     // Final UI setup and show
     QVBoxLayout *centralLayout = new QVBoxLayout;
@@ -182,6 +188,12 @@ MainWindow::MainWindow(QWidget *parent)
     screenSaverTimer->setSingleShot(true);
     screenSaverTimer->setInterval(SCREENSAVER_TIMEOUT_MS);
     connect(screenSaverTimer, &QTimer::timeout, this, &MainWindow::activateScreenSaver);
+
+    // Feed audio data to Geiss visualizer from all sources
+    connect(fileSource, &AudioSource::dataEmitted, geissVisualizer, &GeissWidget::feedAudio);
+    connect(btSource, &AudioSource::dataEmitted, geissVisualizer, &GeissWidget::feedAudio);
+    connect(cdSource, &AudioSource::dataEmitted, geissVisualizer, &GeissWidget::feedAudio);
+    connect(spotSource, &AudioSource::dataEmitted, geissVisualizer, &GeissWidget::feedAudio);
 
     // Monitor playback state changes from all audio sources
     connect(fileSource, &AudioSource::playbackStateChanged, this, &MainWindow::onPlaybackStateChanged);
@@ -291,34 +303,47 @@ void MainWindow::onPlaybackStateChanged(MediaPlayer::PlaybackState state)
     currentPlaybackState = state;
 
     if (state == MediaPlayer::PlayingState) {
-        // Music is playing, stop screensaver timer
-        screenSaverTimer->stop();
-        // If screensaver is active, deactivate it
+        // Music is playing — if screensaver is showing, switch to Geiss visualizer
         if (screenSaverActive) {
             deactivateScreenSaver();
         }
+        // Start idle timer — when it fires during playback, show Geiss visualizer
+        resetScreenSaverTimer();
     } else if (state == MediaPlayer::StoppedState || state == MediaPlayer::PausedState) {
-        // Music stopped or paused, restart screensaver timer
+        // Music stopped or paused — if Geiss is active, deactivate it
+        if (geissActive) {
+            deactivateScreenSaver();
+        }
+        // Restart screensaver timer for clock screensaver
         resetScreenSaverTimer();
     }
 }
 
 void MainWindow::activateScreenSaver()
 {
-    if (screenSaverActive) return;
+    if (screenSaverActive || geissActive) return;
 
-    qDebug() << "Activating screensaver";
-    screenSaverActive = true;
-    screenSaver->start();
-    viewStack->setCurrentIndex(3); // Show screensaver (index 3)
+    if (currentPlaybackState == MediaPlayer::PlayingState) {
+        // Music is playing — show Geiss visualizer instead of clock screensaver
+        qDebug() << "Activating Geiss visualizer";
+        geissActive = true;
+        viewStack->setCurrentIndex(5); // Show Geiss (index 5)
+    } else {
+        // No music — show clock screensaver
+        qDebug() << "Activating screensaver";
+        screenSaverActive = true;
+        screenSaver->start();
+        viewStack->setCurrentIndex(3); // Show screensaver (index 3)
+    }
 }
 
 void MainWindow::deactivateScreenSaver()
 {
-    if (!screenSaverActive) return;
+    if (!screenSaverActive && !geissActive) return;
 
-    qDebug() << "Deactivating screensaver";
+    qDebug() << "Deactivating screensaver/visualizer";
     screenSaverActive = false;
+    geissActive = false;
     viewStack->setCurrentIndex(0); // Return to player view
     resetScreenSaverTimer();
 }
@@ -332,13 +357,8 @@ void MainWindow::deactivateAvs()
 
 void MainWindow::resetScreenSaverTimer()
 {
-    // Only reset timer if not currently playing music
-    if (currentPlaybackState == MediaPlayer::PlayingState) {
-        screenSaverTimer->stop();
-        return;
-    }
-
-    // Restart the timer
+    // Restart the idle timer — it fires for both screensaver (no music)
+    // and Geiss visualizer (music playing). activateScreenSaver() decides which.
     screenSaverTimer->stop();
     screenSaverTimer->start();
 }

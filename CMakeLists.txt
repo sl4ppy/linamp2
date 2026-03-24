@@ -27,6 +27,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/view-screensaver)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/view-avs)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/view-avs/effects)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/vban)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/view-geiss)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/view-geiss/effects)
 
 qt_add_executable(player WIN32 MACOSX_BUNDLE
     src/audiosource-base/audiosource.cpp
@@ -130,6 +132,35 @@ qt_add_executable(player WIN32 MACOSX_BUNDLE
     src/view-avs/effects/avsclock.h
     src/vban/vbansender.cpp
     src/vban/vbansender.h
+    src/view-geiss/geisswidget.cpp
+    src/view-geiss/geisswidget.h
+    src/view-geiss/audioanalyzer.cpp
+    src/view-geiss/audioanalyzer.h
+    src/view-geiss/warpengine.cpp
+    src/view-geiss/warpengine.h
+    src/view-geiss/warpmapgenerator.cpp
+    src/view-geiss/warpmapgenerator.h
+    src/view-geiss/effectengine.cpp
+    src/view-geiss/effectengine.h
+    src/view-geiss/warpparams.h
+    src/view-geiss/colorstate.h
+    src/view-geiss/geisseffect.h
+    src/view-geiss/effects/waveformeffect.cpp
+    src/view-geiss/effects/waveformeffect.h
+    src/view-geiss/effects/radialwaveeffect.cpp
+    src/view-geiss/effects/radialwaveeffect.h
+    src/view-geiss/effects/solarparticles.cpp
+    src/view-geiss/effects/solarparticles.h
+    src/view-geiss/effects/nuclideeffect.cpp
+    src/view-geiss/effects/nuclideeffect.h
+    src/view-geiss/effects/shadebobseffect.cpp
+    src/view-geiss/effects/shadebobseffect.h
+    src/view-geiss/effects/solidlineeffect.cpp
+    src/view-geiss/effects/solidlineeffect.h
+    src/view-geiss/effects/chasereffect.cpp
+    src/view-geiss/effects/chasereffect.h
+    src/view-geiss/effects/grideffect.cpp
+    src/view-geiss/effects/grideffect.h
     src/shared/scale.cpp
     src/shared/scale.h
     src/shared/systemaudiocontrol.cpp

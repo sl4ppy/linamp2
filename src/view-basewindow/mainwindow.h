@@ -17,6 +17,7 @@
 #include "playlistmodel.h"
 #include "screensaverview.h"
 #include "avsview.h"
+#include "geisswidget.h"
 #include "mediaplayer.h"
 #include "vbansender.h"
 
@@ -67,8 +68,10 @@ private:
 
     // Screensaver related
     ScreenSaverView *screenSaver = nullptr;
+    GeissWidget *geissVisualizer = nullptr;
     QTimer *screenSaverTimer = nullptr;
     bool screenSaverActive = false;
+    bool geissActive = false;
     MediaPlayer::PlaybackState currentPlaybackState = MediaPlayer::StoppedState;
 
 };
