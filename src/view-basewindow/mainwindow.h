@@ -50,6 +50,7 @@ public slots:
     void showPlaylist();
     void showMenu();
     void showAvs();
+    void showGeiss();
     void showShutdownModal();
     void open();
 

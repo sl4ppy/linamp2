@@ -146,8 +146,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(cdSource, &AudioSource::metadataChanged, avsView, &AvsView::setMetadata);
     connect(spotSource, &AudioSource::metadataChanged, avsView, &AvsView::setMetadata);
 
-    // Connect visualization click from player view
-    connect(player, &PlayerView::visualizationClicked, this, &MainWindow::showAvs);
+    // Connect visualization click from player view to Geiss visualizer
+    connect(player, &PlayerView::visualizationClicked, this, &MainWindow::showGeiss);
 
     // Prepare Geiss visualizer view
     geissVisualizer = new GeissWidget(this);
@@ -233,6 +233,13 @@ void MainWindow::showAvs()
 {
     avsView->start();
     viewStack->setCurrentIndex(4);
+}
+
+void MainWindow::showGeiss()
+{
+    geissActive = true;
+    viewStack->setCurrentIndex(5);
+    screenSaverTimer->stop();
 }
 
 void MainWindow::showShutdownModal()
