@@ -14,6 +14,8 @@ Linamp is a retro Winamp-inspired music player for Linux/Raspberry Pi, built wit
 - **Spotify Connect** — Appear as a Spotify Connect device on the local network
 - **VBAN network streaming** — Send audio output over the network via VBAN protocol to Voicemeeter Banana or other VBAN-compatible receivers
 - **Spectrum visualizer** — Real-time FFT-based visualization captured from PipeWire system audio output
+- **Geiss visualizer** — Dreamlike audio-reactive warp visuals inspired by the legendary 1998 Winamp plugin, with beat-synced transitions, chromatic dispersion, and 15 warp modes
+- **AVS visualizer** — Winamp AVS-style visualization with oscilloscope, starfield, water, mirror, and more
 - **Screensaver** — 7 themed clock faces (6 analog watch styles + neon digital), randomly selected after 5 minutes idle
 - **Scalable UI** — 1x through 4x DPI scaling with per-scale stylesheets
 
@@ -55,7 +57,8 @@ Views are managed via `QStackedLayout` in `MainWindow` (`src/view-basewindow/mai
 | 1 | `PlaylistView` | File browser and playlist management |
 | 2 | `MainMenuView` | Audio source selection and VBAN toggle |
 | 3 | `ScreenSaverView` | Themed clock faces (Luxury, Aviator, Diver, Minimalist, Chronograph, Neon Retro, Digital), activates after 5 min idle |
-| 4 | `AvsView` | AVS-style visualization (click spectrum to activate) |
+| 4 | `AvsView` | AVS-style visualization (accessible from Sources menu) |
+| 5 | `GeissWidget` | Geiss-style warp visualization (tap spectrum or idle during playback) |
 
 Two base window variants: `DesktopBaseWindow` (windowed with title bar) and `EmbeddedBaseWindow` (fullscreen for Raspberry Pi).
 
@@ -66,9 +69,28 @@ Two base window variants: `DesktopBaseWindow` (windowed with title bar) and `Emb
 | ![Sources menu](screenshots/menu-view.png) | ![Screensaver](screenshots/screensaver-digital.png) |
 | Audio source selection menu | Digital clock screensaver |
 
+#### Geiss Visualizer
+
+Tap the spectrum analyzer to launch the Geiss visualizer, or let it activate automatically after 5 minutes idle during music playback. Tap anywhere or press any key to return to the player.
+
+Inspired by Ryan Geiss's legendary 1998 Winamp visualization plugin ([source](https://github.com/geissomatik/geiss), BSD-3), this is a faithful spiritual recreation of the original's dreamlike audio-reactive visuals, implemented as a CPU software renderer using Qt's QImage framebuffers.
+
+**How it works:** Each frame, audio waveforms and overlay effects are drawn into a 320x100 framebuffer, then the entire image is warped through a precomputed displacement map with bilinear interpolation. The warped output becomes the next frame's input, creating the characteristic swirling, smoke-like feedback loop. Warp maps are generated on a background thread and swapped in on musical beats.
+
+**Features:**
+- 15 warp modes (zoom, sphere, ripples, vortex, perspective, tunnels, black hole, petals, and more)
+- 8 overlay effects (oscilloscope waveforms, radial waveform, solar particles, beat-reactive nuclide bursts, orbiting shade bobs, chromatic dispersion lines, point chasers, scrolling grid)
+- Energy-based beat detection with adaptive threshold and 120-frame volume history
+- Per-channel error diffusion in the warp loop for organic film-grain texture
+- Sinusoidal RGB color animation with randomized frequency multipliers
+- Beat-synchronized warp map transitions and effect cycling
+- Chromatic dispersion on the solid line effect (RGB channels rendered at different temporal offsets)
+
+See [docs/GEISS_ANALYSIS.md](docs/GEISS_ANALYSIS.md) for a deep technical analysis of the original Geiss source code and [docs/GEISS_FOR_LINAMP_DESIGN.md](docs/GEISS_FOR_LINAMP_DESIGN.md) for the implementation design.
+
 #### AVS Visualizations
 
-Click the spectrum visualizer to enter fullscreen AVS mode. Cycle through effects with left/right arrow keys.
+Open from the Sources menu. Cycle through effects with left/right arrow keys.
 
 | | |
 |---|---|
@@ -259,7 +281,9 @@ linamp2/
     audiosourcepython/ # Python-backed audio source wrapper
     shared/            # FFT, ALSA control, scaling, utilities
     vban/              # VBAN network audio streaming
+    view-avs/          # AVS-style visualization engine and effects
     view-basewindow/   # MainWindow, desktop/embedded base windows
+    view-geiss/        # Geiss warp visualizer: audio analysis, warp engine, effects
     view-menu/         # Source selection menu + VBAN toggle
     view-player/       # Main playback UI, spectrum widget, scrolling text
     view-playlist/     # File browser, playlist model, media playlist
