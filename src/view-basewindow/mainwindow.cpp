@@ -310,37 +310,44 @@ void MainWindow::onPlaybackStateChanged(MediaPlayer::PlaybackState state)
     currentPlaybackState = state;
 
     if (state == MediaPlayer::PlayingState) {
-        // Music is playing — if screensaver is showing, switch to Geiss visualizer
+        // Music is playing — if clock screensaver is showing, dismiss it
+        // (Geiss stays active through track transitions — that's the point)
         if (screenSaverActive) {
             deactivateScreenSaver();
         }
-        // Start idle timer — when it fires during playback, show Geiss visualizer
         resetScreenSaverTimer();
     } else if (state == MediaPlayer::StoppedState || state == MediaPlayer::PausedState) {
-        // Music stopped or paused — if Geiss is active, deactivate it
-        if (geissActive) {
-            deactivateScreenSaver();
-        }
-        // Restart screensaver timer for clock screensaver
+        // Music stopped or paused — leave Geiss running.
+        // The idle timer will eventually switch to clock screensaver if
+        // playback doesn't resume (playlist ended, user paused, etc.)
         resetScreenSaverTimer();
     }
 }
 
 void MainWindow::activateScreenSaver()
 {
-    if (screenSaverActive || geissActive) return;
-
     if (currentPlaybackState == MediaPlayer::PlayingState) {
-        // Music is playing — show Geiss visualizer instead of clock screensaver
-        qDebug() << "Activating Geiss visualizer";
-        geissActive = true;
-        viewStack->setCurrentIndex(5); // Show Geiss (index 5)
+        if (!geissActive) {
+            // Music is playing, not yet visualizing — show Geiss
+            qDebug() << "Activating Geiss visualizer";
+            geissActive = true;
+            viewStack->setCurrentIndex(5);
+        }
+        // If Geiss is already active, do nothing (let it keep running)
     } else {
-        // No music — show clock screensaver
-        qDebug() << "Activating screensaver";
-        screenSaverActive = true;
-        screenSaver->start();
-        viewStack->setCurrentIndex(3); // Show screensaver (index 3)
+        // No music — transition to clock screensaver
+        // (this handles: playlist ended while Geiss was showing,
+        //  or idle timeout with no playback at all)
+        if (geissActive) {
+            qDebug() << "Playlist ended, switching Geiss to screensaver";
+            geissActive = false;
+        }
+        if (!screenSaverActive) {
+            qDebug() << "Activating screensaver";
+            screenSaverActive = true;
+            screenSaver->start();
+            viewStack->setCurrentIndex(3);
+        }
     }
 }
 
