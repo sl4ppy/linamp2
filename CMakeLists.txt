@@ -69,6 +69,8 @@ qt_add_executable(player WIN32 MACOSX_BUNDLE
     src/view-basewindow/titlebar.cpp
     src/view-basewindow/titlebar.h
     src/view-basewindow/titlebar.ui
+    src/view-basewindow/viewtransition.cpp
+    src/view-basewindow/viewtransition.h
     src/view-playlist/filebrowsericonprovider.cpp
     src/view-playlist/filebrowsericonprovider.h
     src/view-playlist/playlistmodel.cpp

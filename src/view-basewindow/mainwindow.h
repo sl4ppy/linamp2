@@ -18,6 +18,7 @@
 #include "screensaverview.h"
 #include "avsview.h"
 #include "geisswidget.h"
+#include "viewtransition.h"
 #include "mediaplayer.h"
 #include "vbansender.h"
 
@@ -67,9 +68,10 @@ private:
     QProcess *shutdownProcess = nullptr;
     void shutdown();
 
-    // Screensaver related
+    // Screensaver and visualization
     ScreenSaverView *screenSaver = nullptr;
     GeissWidget *geissVisualizer = nullptr;
+    ViewTransition *viewTransition = nullptr;
     QTimer *screenSaverTimer = nullptr;
     bool screenSaverActive = false;
     bool geissActive = false;

@@ -173,6 +173,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     setCentralWidget(centralWidget);
 
+    // Crossfade transition for visualizer views
+    viewTransition = new ViewTransition(centralWidget, viewStack, this);
+
     resize(WINDOW_W, WINDOW_H);
     this->setMaximumWidth(WINDOW_W);
     this->setMaximumHeight(WINDOW_H);
@@ -232,13 +235,13 @@ void MainWindow::showMenu()
 void MainWindow::showAvs()
 {
     avsView->start();
-    viewStack->setCurrentIndex(4);
+    viewTransition->fadeTo(4);
 }
 
 void MainWindow::showGeiss()
 {
     geissActive = true;
-    viewStack->setCurrentIndex(5);
+    viewTransition->fadeTo(5);
     screenSaverTimer->stop();
 }
 
@@ -331,7 +334,7 @@ void MainWindow::activateScreenSaver()
             // Music is playing, not yet visualizing — show Geiss
             qDebug() << "Activating Geiss visualizer";
             geissActive = true;
-            viewStack->setCurrentIndex(5);
+            viewTransition->fadeTo(5);
         }
         // If Geiss is already active, do nothing (let it keep running)
     } else {
@@ -356,16 +359,22 @@ void MainWindow::deactivateScreenSaver()
     if (!screenSaverActive && !geissActive) return;
 
     qDebug() << "Deactivating screensaver/visualizer";
+    bool wasVisualizerActive = geissActive;
     screenSaverActive = false;
     geissActive = false;
-    viewStack->setCurrentIndex(0); // Return to player view
+
+    if (wasVisualizerActive) {
+        viewTransition->fadeTo(0); // Crossfade back to player
+    } else {
+        viewStack->setCurrentIndex(0); // Screensaver exits instantly
+    }
     resetScreenSaverTimer();
 }
 
 void MainWindow::deactivateAvs()
 {
     avsView->stop();
-    viewStack->setCurrentIndex(0); // Return to player view
+    viewTransition->fadeTo(0); // Crossfade back to player
     resetScreenSaverTimer();
 }
 
