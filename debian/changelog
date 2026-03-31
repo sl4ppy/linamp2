@@ -1,3 +1,12 @@
+linamp (1.4.1) bookworm; urgency=medium
+
+  * Bugfix: Geiss visualizer no longer closes on track transitions. Previously,
+    transient StoppedState signals emitted during track changes and buffer
+    underrun retries caused the visualizer to deactivate. The visualizer now
+    stays active until explicitly dismissed by the user.
+
+ -- Rodrigo Méndez <rodrigo@linamp.org>  Tue, 31 Mar 2026 14:00:00 -0600
+
 linamp (1.4.0) bookworm; urgency=medium
 
   * Feature: Spotify Source, use Linamp as a Spotify Connect receiver
