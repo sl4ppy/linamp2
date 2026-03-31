@@ -71,7 +71,14 @@ Two base window variants: `DesktopBaseWindow` (windowed with title bar) and `Emb
 
 #### Geiss Visualizer
 
-Tap the spectrum analyzer to launch the Geiss visualizer, or let it activate automatically after 5 minutes idle during music playback. Tap anywhere or press any key to return to the player.
+Tap the spectrum analyzer to launch the Geiss visualizer, or let it activate automatically after 5 minutes idle during music playback. The visualizer persists across track transitions and only dismisses on tap or keypress.
+
+| | |
+|---|---|
+| ![Geiss 1](screenshots/geiss-visualizer-1.png) | ![Geiss 2](screenshots/geiss-visualizer-2.png) |
+| Perspective warp with oscilloscope overlay | Vortex warp with shade bobs |
+| ![Geiss 3](screenshots/geiss-visualizer-3.png) | ![Geiss 4](screenshots/geiss-visualizer-4.png) |
+| Tunnel warp with waveform overlay | Sphere warp with orbiting shade bobs |
 
 Inspired by Ryan Geiss's legendary 1998 Winamp visualization plugin ([source](https://github.com/geissomatik/geiss), BSD-3), this is a faithful spiritual recreation of the original's dreamlike audio-reactive visuals, implemented as a CPU software renderer using Qt's QImage framebuffers.
 
