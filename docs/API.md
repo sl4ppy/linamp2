@@ -41,6 +41,8 @@ Base URL: `http://<linamp-ip>:8080`
 | GET | `/api/clock?index=N` | by theme index |
 | GET | `/api/clock/list` | list face names |
 
+Available faces: Luxury, Aviator, Diver, Minimalist, Chronograph, Neon Retro, Bauhaus, Mondaine, Orbital, Guilloche, Digital, Seven Segment, Split Flap, Nixie, Terminal (or GET `/api/clock/list`).
+
 ### Meta
 | Method | Path | Notes |
 |---|---|---|
@@ -52,8 +54,9 @@ Base URL: `http://<linamp-ip>:8080`
 
 ## Examples
 ```bash
-curl http://10.10.0.204:8080/api/play
-curl "http://10.10.0.204:8080/api/volume?level=60"
-curl "http://10.10.0.204:8080/api/clock?face=Nixie"
+curl http://localhost:8080/api/play
+curl "http://localhost:8080/api/volume?level=60"
+curl "http://localhost:8080/api/clock?face=Nixie"
 ```
-Or just open `http://10.10.0.204:8080/api/play` in a browser / bookmark it.
+
+Or just open `http://localhost:8080/api/play` in a browser / bookmark it.
