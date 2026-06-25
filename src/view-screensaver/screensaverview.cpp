@@ -1042,6 +1042,7 @@ void ScreenSaverView::paintDigitalSplitFlap(QPainter &painter)
     int hour = tm.hour() % 12; if (hour == 0) hour = 12;
     QString hh = QString("%1").arg(hour, 2, 10, QChar('0'));
     QString mm = QString("%1").arg(tm.minute(), 2, 10, QChar('0'));
+    QString ss = QString("%1").arg(tm.second(), 2, 10, QChar('0'));
 
     // Scale to fit the display height (caps at UI_SCALE on tall screens).
     float s = qMin(static_cast<float>(UI_SCALE), height() * 0.0035f);
@@ -1050,7 +1051,7 @@ void ScreenSaverView::paintDigitalSplitFlap(QPainter &painter)
     float tileH = 150.0f * s;
     float gap   = 18.0f * s;
     float labelH = 26.0f * s;
-    float totalW = tileW * 2 + gap;
+    float totalW = tileW * 3 + gap * 2;
     float totalH = tileH + labelH;
 
     placeFloatingBlock(totalW, totalH);
@@ -1098,6 +1099,7 @@ void ScreenSaverView::paintDigitalSplitFlap(QPainter &painter)
 
     drawTile(x0, hh, "HOURS");
     drawTile(x0 + tileW + gap, mm, "MINUTES");
+    drawTile(x0 + (tileW + gap) * 2, ss, "SECONDS");
 }
 
 // --- Nixie tubes ---
