@@ -397,6 +397,9 @@ void MainWindow::showClockScreensaver(int themeIndex)
     screenSaverActive = true;
     screenSaver->start(themeIndex);
     viewStack->setCurrentIndex(3); // ScreenSaverView
+    // Keep the idle timer running so normal idle behavior resumes after the
+    // timeout: an API-selected face is shown now but is not pinned forever —
+    // if music is playing it will yield to Geiss at the next idle activation.
     resetScreenSaverTimer();
 }
 

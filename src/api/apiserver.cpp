@@ -186,8 +186,14 @@ bool ApiServer::authorized(const HttpRequest &req) const
         return true;
     if (req.query.value("token") == m_token)
         return true;
-    if (req.headers.value("authorization") == "Bearer " + m_token)
-        return true;
+    const QString auth = req.headers.value("authorization");
+    const int sp = auth.indexOf(' ');
+    if (sp > 0) {
+        const QString scheme = auth.left(sp);
+        const QString cred = auth.mid(sp + 1).trimmed();
+        if (scheme.compare("Bearer", Qt::CaseInsensitive) == 0 && cred == m_token)
+            return true;
+    }
     return false;
 }
 
