@@ -139,6 +139,8 @@ qt_add_executable(player WIN32 MACOSX_BUNDLE
     src/api/apiserver.h
     src/api/webstatehub.cpp
     src/api/webstatehub.h
+    src/api/ssebroker.cpp
+    src/api/ssebroker.h
     src/view-geiss/geisswidget.cpp
     src/view-geiss/geisswidget.h
     src/view-geiss/audioanalyzer.cpp

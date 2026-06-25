@@ -27,6 +27,7 @@
 
 class ApiServer;
 class WebStateHub;
+class SseBroker;
 
 class MainWindow : public QMainWindow
 {
@@ -88,6 +89,7 @@ private:
     MediaPlayer::PlaybackState currentPlaybackState = MediaPlayer::StoppedState;
     ApiServer *apiServer = nullptr;
     WebStateHub *webState = nullptr;
+    SseBroker *sseBroker = nullptr;
 
 };
 

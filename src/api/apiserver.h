@@ -9,6 +9,7 @@
 class AudioSourceCoordinator;
 class MainWindow;
 class WebStateHub;
+class SseBroker;
 class QTcpServer;
 class QTcpSocket;
 
@@ -31,6 +32,7 @@ public:
     explicit ApiServer(AudioSourceCoordinator *coordinator,
                        MainWindow *window,
                        WebStateHub *webState,
+                       SseBroker *sseBroker,
                        QObject *parent = nullptr);
 
 private slots:
@@ -54,12 +56,14 @@ private:
     AudioSourceCoordinator *m_coordinator = nullptr;
     MainWindow *m_window = nullptr;
     WebStateHub *m_webState = nullptr;
+    SseBroker *m_sseBroker = nullptr;
     QHash<QTcpSocket *, QByteArray> m_buffers;
 
     bool m_enabled = true;
     quint16 m_port = 8080;
     QString m_bindAddress = "0.0.0.0";
     QString m_token;
+    int m_maxSseClients = 8;
 };
 
 #endif // APISERVER_H

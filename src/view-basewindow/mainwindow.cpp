@@ -3,6 +3,7 @@
 #include "mainwindow.h"
 #include "apiserver.h"
 #include "webstatehub.h"
+#include "ssebroker.h"
 #include "desktopplayerwindow.h"
 #include "qstandardpaths.h"
 #include "ui_desktopplayerwindow.h"
@@ -210,9 +211,10 @@ MainWindow::MainWindow(QWidget *parent)
     screenSaverTimer->start();
 
     // Web state aggregation + HTTP/SSE API
-    webState = new WebStateHub(coordinator,
-                               { fileSource, btSource, cdSource, spotSource }, this);
-    apiServer = new ApiServer(coordinator, this, webState, this);
+    webState  = new WebStateHub(coordinator,
+                                { fileSource, btSource, cdSource, spotSource }, this);
+    sseBroker = new SseBroker(webState, this);
+    apiServer = new ApiServer(coordinator, this, webState, sseBroker, this);
 }
 
 MainWindow::~MainWindow()

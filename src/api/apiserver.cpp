@@ -13,6 +13,7 @@
 #include "audiosourcecoordinator.h"
 #include "mainwindow.h"
 #include "webstatehub.h"
+#include "ssebroker.h"
 #include "screensaverview.h"
 #include "mediaplayer.h"
 
@@ -39,6 +40,7 @@ static QByteArray reasonPhrase(int status)
     case 401: return "Unauthorized";
     case 404: return "Not Found";
     case 405: return "Method Not Allowed";
+    case 503: return "Service Unavailable";
     default:  return "OK";
     }
 }
@@ -110,14 +112,16 @@ HttpRequest parseRequest(const QByteArray &raw)
 // --- ApiServer ---
 
 ApiServer::ApiServer(AudioSourceCoordinator *coordinator, MainWindow *window,
-                     WebStateHub *webState, QObject *parent)
-    : QObject(parent), m_coordinator(coordinator), m_window(window), m_webState(webState)
+                     WebStateHub *webState, SseBroker *sseBroker, QObject *parent)
+    : QObject(parent), m_coordinator(coordinator), m_window(window),
+      m_webState(webState), m_sseBroker(sseBroker)
 {
     QSettings settings;
-    m_enabled     = settings.value("api/enabled", true).toBool();
-    m_port        = static_cast<quint16>(settings.value("api/port", 8080).toInt());
-    m_bindAddress = settings.value("api/bindAddress", "0.0.0.0").toString();
-    m_token       = settings.value("api/token", "").toString();
+    m_enabled       = settings.value("api/enabled", true).toBool();
+    m_port          = static_cast<quint16>(settings.value("api/port", 8080).toInt());
+    m_bindAddress   = settings.value("api/bindAddress", "0.0.0.0").toString();
+    m_token         = settings.value("api/token", "").toString();
+    m_maxSseClients = settings.value("api/maxSseClients", 8).toInt();
 
     if (!m_enabled) {
         qInfo() << "[api] disabled via config";
@@ -144,6 +148,7 @@ void ApiServer::onNewConnection()
         QTcpSocket *socket = m_server->nextPendingConnection();
         connect(socket, &QTcpSocket::readyRead, this, &ApiServer::onReadyRead);
         connect(socket, &QTcpSocket::disconnected, this, [this, socket]() {
+            if (m_sseBroker) m_sseBroker->removeClient(socket);
             m_buffers.remove(socket);
             socket->deleteLater();
         });
@@ -169,6 +174,19 @@ void ApiServer::onReadyRead()
 
     HttpRequest req = parseRequest(buf);
     m_buffers.remove(socket);
+
+    if (req.valid && authorized(req) && req.path == "/api/events") {
+        if (!m_sseBroker || m_sseBroker->clientCount() >= m_maxSseClients) {
+            sendResponse(socket, {503, errJson("too many SSE clients")});
+            socket->disconnectFromHost();
+            return;
+        }
+        // Hand the socket to the broker: stop parsing further reads and keep it
+        // open. The disconnected handler removes it from the broker and frees it.
+        disconnect(socket, &QTcpSocket::readyRead, this, &ApiServer::onReadyRead);
+        m_sseBroker->addClient(socket);
+        return;
+    }
 
     Response resp;
     if (!req.valid)
