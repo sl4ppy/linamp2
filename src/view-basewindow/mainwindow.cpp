@@ -1,6 +1,7 @@
 #include <QFileDialog>
 
 #include "mainwindow.h"
+#include "apiserver.h"
 #include "desktopplayerwindow.h"
 #include "qstandardpaths.h"
 #include "ui_desktopplayerwindow.h"
@@ -206,6 +207,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Start the screensaver timer (idle from beginning)
     screenSaverTimer->start();
+
+    // HTTP control API (best-effort; never fatal)
+    apiServer = new ApiServer(coordinator, this, this);
 }
 
 MainWindow::~MainWindow()

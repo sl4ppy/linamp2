@@ -25,6 +25,8 @@
 // Screensaver timeout in milliseconds (5 minutes default)
 #define SCREENSAVER_TIMEOUT_MS (5 * 60 * 1000)
 
+class ApiServer;
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -83,6 +85,7 @@ private:
     bool screenSaverActive = false;
     bool geissActive = false;
     MediaPlayer::PlaybackState currentPlaybackState = MediaPlayer::StoppedState;
+    ApiServer *apiServer = nullptr;
 
 };
 
