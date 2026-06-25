@@ -222,11 +222,11 @@ MainMenuView (background #333350)
 
 **Files:** `src/view-screensaver/screensaverview.h`, `.cpp`, `.ui`, `clockthemes.h`
 
-Clock screensaver with 7 themed clock faces (6 analog watch styles + neon digital), randomly selected on each activation. See [SCREENSAVER.md](SCREENSAVER.md) for full details.
+Clock screensaver with 15 themed clock faces (10 analog dials + 5 digital styles), randomly selected on each activation. See [SCREENSAVER.md](SCREENSAVER.md) for full details.
 
 ### Themes
 
-6 analog themes (Luxury, Aviator, Diver, Minimalist, Chronograph, Neon Retro) each define hand shapes, tick markers, colors, and decorative elements via `ClockTheme` in `clockthemes.h`. The analog dial is circular and bounces around the screen. A 7th theme renders the neon digital clock (floating time/date text).
+10 analog themes (Luxury, Aviator, Diver, Minimalist, Chronograph, Neon Retro, Bauhaus, Mondaine, Orbital, Guilloché) each define hand shapes, tick markers, colors, and decorative elements via `ClockTheme` in `clockthemes.h`. Most render a circular dial that bounces around the screen; Orbital is hands-free (arc trails) and Guilloché adds a radial sunburst texture. 5 digital styles (Neon, Seven Segment, Split Flap, Nixie, Terminal) are selected via the `DigitalStyle` enum and dispatched from `paintDigitalClock()`.
 
 Glow rendering uses an offscreen buffer sized to the dial bounding box at 1/4 resolution, blurred and composited as a soft bloom under sharp core elements.
 

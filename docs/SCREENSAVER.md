@@ -2,7 +2,7 @@
 
 ## Overview
 
-The screensaver activates after 5 minutes of idle time (no playback and no user interaction). It randomly selects one of 7 themed clock faces each time it activates: 6 analog watch styles and a neon digital clock. All analog themes feature a circular bouncing dial to prevent burn-in. Any mouse click, key press, or music playback immediately deactivates it.
+The screensaver activates after 5 minutes of idle time (no playback and no user interaction). It randomly selects one of 15 themed clock faces each time it activates: 10 analog dials and 5 digital styles. All faces float and bounce around the screen to prevent burn-in. Any mouse click, key press, or music playback immediately deactivates it.
 
 ![Digital clock screensaver](../screenshots/screensaver-digital.png)
 
@@ -20,23 +20,32 @@ All analog themes render a circular watch dial that bounces around the screen. E
 | **Minimalist** | Pure black | Thin needle for all 3 hands | Small dots at hours only, no minute ticks | Muted colors, subtle breathing, minimal rim |
 | **Chronograph** | Dark gray | Dauphine hour+minute, needle second w/ counterweight | Rect indices, line minutes | 3 decorative rings, tachymeter outer ring, yellow second hand |
 | **Neon Retro** | Transparent dark | Alpha/leaf outlines (no fill), needle second | Diamond cardinals+hours, dot minutes | Hue-cycling colors, outline-only rendering, 1.5x glow, Arabic numerals |
+| **Bauhaus** | Matte black | Hairline white baton hour+minute, yellow needle second | White hour bars, dotted minute ring | Chrome-yellow second hand with pivot dot, Dieter Rams restraint |
+| **Mondaine** | Signage white | Bold black baton hour+minute | Bold black hour bars, thin minute lines | Iconic red disc-tipped ("lollipop") second hand, Swiss-railway look |
+| **Orbital** | Dark blue-black | None — hands-free | Faint concentric guide rings | Glowing hour/minute/second arc trails sweeping clockwise from 12, center digital readout |
+| **Guilloché** | Emerald radial gradient | Gold dauphine hour+minute, gold needle second | Gold applied rect indices | Radial sunburst dial texture, gold rim and center |
 
-**Hand shapes** (`HandShape` enum): Tapered, Sword, Mercedes (circle cutout), Dauphine (diamond cross-section), Needle, Breguet (moon-hole), Alpha/Leaf (sinusoidal bulge).
+**Hand shapes** (`HandShape` enum): Tapered, Sword, Mercedes (circle cutout), Dauphine (diamond cross-section), Needle, Breguet (moon-hole), Alpha/Leaf (sinusoidal bulge), Baton (flat rectangle).
 
 **Tick shapes** (`TickShape` enum): Line, Rect, Triangle, Dot, Diamond.
 
+**Special analog renders:** the **Orbital** face (`orbital` flag) skips the hand/tick pipeline and draws three glowing arc trails plus a center digital readout; the **Guilloché** face (`guilloche` flag) fills the dial with a radial gradient and 180 sunburst lines clipped to the dial. The disc-tipped second hand (Mondaine/Bauhaus) is driven by the `secondDisc`/`secondDiscDist`/`secondDiscRadius` fields in `HandConfig`.
+
 **Glow-in-the-dark rendering:** Elements are painted to a glow buffer sized to the dial bounding box at 1/4 resolution, blurred with a 2-pass box blur approximating Gaussian, then composited as a soft glow layer underneath the sharp full-resolution core. Glow intensity is configurable per theme (e.g., Neon gets 1.5x, Minimalist gets 0.3x).
 
-### Digital Theme
+### Digital Themes
 
-A floating clock displaying time (12-hour with blinking colon), AM/PM, and the current date. The text block bounces off the screen edges like a DVD screensaver.
+Digital faces all bounce off the screen edges like a DVD screensaver. The style is selected per theme via the `DigitalStyle` enum (`Neon`, `SevenSegment`, `SplitFlap`, `Nixie`, `Terminal`); `paintDigitalClock()` dispatches to the matching renderer, and the shared `placeFloatingBlock()` helper handles centering and edge bouncing for a content block of any size.
 
-Rendered using 3-layer neon glow via QPainterPath strokes:
-1. Outer glow — wide pen, low alpha
-2. Mid glow — medium pen, medium alpha
-3. Core — narrow filled path, white-tinted color
+| Style | Look |
+|-------|------|
+| **Neon** | Floating time (12-hour, blinking colon), AM/PM and date with a 3-layer neon glow and rainbow hue cycling |
+| **Seven Segment** | Cyan lit segments over dim ghost segments with soft bloom, glowing colon, AM/PM + seconds label |
+| **Split Flap** | Charcoal Solari flip tiles with a center seam, axle notches and condensed white numerals (HOURS / MINUTES) |
+| **Nixie** | Four glass tubes with warm orange glow cathodes, faint caged "8" ghost digits, end caps and neon colon dots |
+| **Terminal** | Phosphor-green CRT console panel — prompt, large time, date and a blinking cursor block over scanlines |
 
-Fonts: DejaVu Sans Mono for time (44px * UI_SCALE), DejaVu Sans for AM/PM (18px) and date (13px).
+The original Neon style renders with 3-layer glow via QPainterPath strokes (outer wide/low-alpha, mid medium, core narrow white-tinted fill). Fonts: DejaVu Sans Mono for time (44px * UI_SCALE), DejaVu Sans for AM/PM (18px) and date (13px).
 
 ## Shared Effects
 
@@ -50,7 +59,7 @@ Fonts: DejaVu Sans Mono for time (44px * UI_SCALE), DejaVu Sans for AM/PM (18px)
 
 ```
 src/view-screensaver/
-  clockthemes.h       # Theme data structures, hand polygon generators, 7 theme definitions
+  clockthemes.h       # Theme data structures, hand polygon generators, 15 theme definitions
   screensaverview.h   # Class definition with ClockMode enum, themed drawing methods
   screensaverview.cpp # All rendering logic (digital + themed analog)
   screensaverview.ui  # Qt Designer UI (minimal)
@@ -66,7 +75,7 @@ src/view-basewindow/
 - `ClockColors` — all colors (dial, hands, ticks, numerals, lume, center pin, rim, decorative rings)
 - `HandConfig` — shape, length, width for each hand + counterweight options
 - `TickConfig` — shape and size for cardinal/hour/minute ticks + luminous dots toggle
-- Rendering flags: `isDigital`, `outlineOnly`, `hueCycling`, `glowIntensity`, `breatheAmount`
+- Rendering flags: `isDigital`, `digitalStyle`, `orbital`, `guilloche`, `outlineOnly`, `hueCycling`, `glowIntensity`, `breatheAmount`
 - Dial properties: `dialRadiusFraction`, `decorativeRings`, `tachymeterRing`, `numeralStyle`
 
 Hand polygons are generated by shape-specific functions returning `QVector<QPointF>` in local coordinates (pivot at origin, tip pointing up). The caller rotates and translates to the dial center.
@@ -101,4 +110,4 @@ The analog clock is optimized for Raspberry Pi 4:
 2. Run: `./start.sh`
 3. Wait for idle timeout (or temporarily reduce `SCREENSAVER_TIMEOUT_MS` for testing)
 4. Dismiss (click or keypress), wait again — will get a different random theme
-5. 7 possible themes: Luxury, Aviator, Diver, Minimalist, Chronograph, Neon Retro (analog), Digital
+5. 15 possible themes — analog: Luxury, Aviator, Diver, Minimalist, Chronograph, Neon Retro, Bauhaus, Mondaine, Orbital, Guilloché; digital: Neon, Seven Segment, Split Flap, Nixie, Terminal

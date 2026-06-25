@@ -9,7 +9,7 @@ Linamp is a retro Winamp-inspired music player for Linux/Raspberry Pi, built wit
 > - 📡 **VBAN** — stream audio output over the network to Voicemeeter Banana / VBAN receivers
 > - 🌀 **Geiss** — dreamlike audio-reactive warp visuals (15 warp modes, beat-synced transitions, chromatic dispersion, 2s crossfades) inspired by the 1998 Winamp plugin
 > - 🎆 **AVS** — Winamp AVS-style oscilloscope, starfield, water, mirror, and more
-> - 🕐 **Screensaver** — 7 themed clock faces (6 analog watch styles + neon digital) after 5 min idle
+> - 🕐 **Screensaver** — 15 themed clock faces (10 analog dials + 5 digital styles) after 5 min idle
 > - 🔍 **Scalable UI** — 1x through 4x DPI scaling with per-scale stylesheets
 
 ## The Hardware
@@ -34,7 +34,7 @@ A physical Linamp2 unit I built — a custom enclosure with a wide touchscreen r
 - **Spectrum visualizer** — Real-time FFT-based visualization captured from PipeWire system audio output
 - **Geiss visualizer** — Dreamlike audio-reactive warp visuals inspired by the legendary 1998 Winamp plugin, with beat-synced transitions, chromatic dispersion, and 15 warp modes
 - **AVS visualizer** — Winamp AVS-style visualization with oscilloscope, starfield, water, mirror, and more
-- **Screensaver** — 7 themed clock faces (6 analog watch styles + neon digital), randomly selected after 5 minutes idle
+- **Screensaver** — 15 themed clock faces: 10 analog dials (classic watch styles plus Bauhaus, Mondaine Swiss-railway, a hands-free Orbital complication, and emerald guilloché) and 5 digital styles (neon, seven-segment LED, split-flap, Nixie tube, terminal/CRT), randomly selected after 5 minutes idle
 - **Scalable UI** — 1x through 4x DPI scaling with per-scale stylesheets
 
 ## Architecture
@@ -74,7 +74,7 @@ Views are managed via `QStackedLayout` in `MainWindow` (`src/view-basewindow/mai
 | 0 | `PlayerView` | Main playback UI: spectrum visualizer, track info, transport controls |
 | 1 | `PlaylistView` | File browser and playlist management |
 | 2 | `MainMenuView` | Audio source selection and VBAN toggle |
-| 3 | `ScreenSaverView` | Themed clock faces (Luxury, Aviator, Diver, Minimalist, Chronograph, Neon Retro, Digital), activates after 5 min idle |
+| 3 | `ScreenSaverView` | Themed clock faces (10 analog dials + 5 digital styles), activates after 5 min idle |
 | 4 | `AvsView` | AVS-style visualization (accessible from Sources menu) |
 | 5 | `GeissWidget` | Geiss-style warp visualization (tap spectrum or idle during playback) |
 

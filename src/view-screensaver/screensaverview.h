@@ -49,6 +49,18 @@ private:
     // Painting helpers
     void paintDigitalClock(QPainter &painter);
     void paintAnalogClock(QPainter &painter);
+    void paintOrbitalClock(QPainter &painter);
+
+    // Digital style renderers (dispatched from paintDigitalClock)
+    void paintDigitalNeon(QPainter &painter);
+    void paintDigitalSevenSeg(QPainter &painter);
+    void paintDigitalSplitFlap(QPainter &painter);
+    void paintDigitalNixie(QPainter &painter);
+    void paintDigitalTerminal(QPainter &painter);
+
+    // Position a content block of the given size, bouncing off edges.
+    // Updates m_posX/m_posY/velocity and returns the block's top-left corner.
+    QPointF placeFloatingBlock(float totalW, float totalH);
 
     // Themed analog clock drawing methods
     void drawDialBackground(QPainter &p, float cx, float cy, float radius, const ClockTheme &theme);

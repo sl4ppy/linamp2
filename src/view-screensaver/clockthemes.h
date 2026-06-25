@@ -16,7 +16,17 @@ enum class HandShape {
     Dauphine,
     Needle,
     Breguet,
-    Alpha
+    Alpha,
+    Baton      // simple flat rectangle (Swiss railway / Bauhaus)
+};
+
+// Digital clock render styles (selected via ClockTheme::digitalStyle)
+enum class DigitalStyle {
+    Neon,          // original glowing neon text
+    SevenSegment,  // segmented LED readout
+    SplitFlap,     // Solari departure-board flip tiles
+    Nixie,         // warm orange glow-tube digits
+    Terminal       // phosphor-green CRT console
 };
 
 enum class TickShape {
@@ -38,6 +48,7 @@ enum class NumeralStyle {
 
 struct ClockColors {
     QColor dial;           // dial background fill
+    QColor dialEdge;       // outer color for radial gradient dials (guilloche); invalid = flat dial
     QColor rim;            // outer rim stroke
     QColor hourHand;
     QColor minuteHand;
@@ -72,6 +83,11 @@ struct HandConfig {
     float secondWidth      = 0.02f;
     bool secondCounterweight = false;
     float counterweightLen = 0.25f;   // fraction of dial radius
+
+    // Disc on the second hand (Mondaine lollipop tip, Bauhaus pivot dot)
+    bool  secondDisc        = false;
+    float secondDiscDist    = 0.0f;   // fraction of radius along hand (+tip, -behind pivot)
+    float secondDiscRadius  = 0.0f;   // fraction of radius
 };
 
 struct ClockTheme {
@@ -88,6 +104,9 @@ struct ClockTheme {
     bool tachymeterRing         = false;
 
     bool isDigital              = false;  // true = use digital clock renderer
+    DigitalStyle digitalStyle   = DigitalStyle::Neon;
+    bool orbital                = false;  // hands-free arc-trail analog face
+    bool guilloche              = false;  // radial sunburst dial texture
     bool outlineOnly            = false;  // hands drawn as outlines (no fill)
     bool hueCycling             = false;
     float glowIntensity         = 1.0f;
@@ -224,6 +243,18 @@ inline QVector<QPointF> generateAlphaHand(float length, float width)
     return pts;
 }
 
+inline QVector<QPointF> generateBatonHand(float length, float width)
+{
+    // Flat-ended rectangle with a hint of taper toward the tip
+    float hw = width * 0.5f;
+    return {
+        { hw, 0.0f },               // base right
+        { hw * 0.85f, -length },    // tip right
+        { -hw * 0.85f, -length },   // tip left
+        { -hw, 0.0f }               // base left
+    };
+}
+
 // Dispatch to correct generator
 inline QVector<QPointF> generateHandPolygon(HandShape shape, float length, float width)
 {
@@ -235,6 +266,7 @@ inline QVector<QPointF> generateHandPolygon(HandShape shape, float length, float
     case HandShape::Needle:    return generateNeedleHand(length, width);
     case HandShape::Breguet:   return generateBreguetHand(length, width);
     case HandShape::Alpha:     return generateAlphaHand(length, width);
+    case HandShape::Baton:     return generateBatonHand(length, width);
     }
     return generateTaperedHand(length, width);
 }
@@ -509,11 +541,206 @@ inline ClockTheme makeNeonRetroTheme()
     return t;
 }
 
+inline ClockTheme makeBauhausTheme()
+{
+    ClockTheme t;
+    t.name = "Bauhaus";
+    t.colors.dial           = QColor(17, 19, 23);
+    t.colors.rim            = QColor(38, 40, 46);
+    t.colors.hourHand       = QColor(242, 244, 246);
+    t.colors.minuteHand     = QColor(242, 244, 246);
+    t.colors.secondHand     = QColor(255, 196, 0);   // chrome yellow
+    t.colors.ticks          = QColor(238, 240, 242);
+    t.colors.cardinalTicks  = QColor(255, 255, 255);
+    t.colors.numerals       = QColor(238, 240, 242);
+    t.colors.lume           = QColor(125, 128, 136);
+    t.colors.centerPin      = QColor(242, 244, 246);
+    t.colors.decorativeRing = QColor(40, 40, 46, 60);
+
+    t.hands.hourShape     = HandShape::Baton;
+    t.hands.minuteShape   = HandShape::Baton;
+    t.hands.secondShape   = HandShape::Needle;
+    t.hands.hourLength    = 0.52f;
+    t.hands.minuteLength  = 0.80f;
+    t.hands.secondLength  = 0.84f;
+    t.hands.hourWidth     = 0.052f;
+    t.hands.minuteWidth   = 0.036f;
+    t.hands.secondWidth   = 0.014f;
+    t.hands.secondDisc       = true;
+    t.hands.secondDiscDist   = -0.18f;   // small dot behind the pivot
+    t.hands.secondDiscRadius = 0.032f;
+
+    t.ticks.cardinalShape = TickShape::Line;
+    t.ticks.hourShape     = TickShape::Line;
+    t.ticks.minuteShape   = TickShape::Dot;
+    t.ticks.cardinalSize  = 1.3f;
+    t.ticks.hourSize      = 1.0f;
+    t.ticks.minuteSize    = 0.4f;
+
+    t.numeralStyle        = NumeralStyle::None;
+    t.dialRadiusFraction  = 0.42f;
+    t.decorativeRings     = 0;
+    t.glowIntensity       = 0.4f;
+    t.breatheAmount       = 0.15f;
+    return t;
+}
+
+inline ClockTheme makeMondaineTheme()
+{
+    ClockTheme t;
+    t.name = "Mondaine";
+    t.colors.dial           = QColor(246, 246, 243);  // signage white
+    t.colors.rim            = QColor(210, 210, 205);
+    t.colors.hourHand       = QColor(21, 23, 26);
+    t.colors.minuteHand     = QColor(21, 23, 26);
+    t.colors.secondHand     = QColor(226, 35, 26);    // Swiss red
+    t.colors.ticks          = QColor(21, 23, 26);
+    t.colors.cardinalTicks  = QColor(21, 23, 26);
+    t.colors.numerals       = QColor(21, 23, 26);
+    t.colors.lume           = QColor(21, 23, 26);
+    t.colors.centerPin      = QColor(21, 23, 26);
+    t.colors.decorativeRing = QColor(180, 180, 175, 50);
+
+    t.hands.hourShape     = HandShape::Baton;
+    t.hands.minuteShape   = HandShape::Baton;
+    t.hands.secondShape   = HandShape::Needle;
+    t.hands.hourLength    = 0.55f;
+    t.hands.minuteLength  = 0.80f;
+    t.hands.secondLength  = 0.70f;
+    t.hands.hourWidth     = 0.072f;
+    t.hands.minuteWidth   = 0.050f;
+    t.hands.secondWidth   = 0.018f;
+    t.hands.secondDisc       = true;
+    t.hands.secondDiscDist   = 0.70f;    // lollipop at the tip
+    t.hands.secondDiscRadius = 0.060f;
+
+    t.ticks.cardinalShape = TickShape::Rect;
+    t.ticks.hourShape     = TickShape::Rect;
+    t.ticks.minuteShape   = TickShape::Line;
+    t.ticks.cardinalSize  = 1.4f;
+    t.ticks.hourSize      = 1.4f;
+    t.ticks.minuteSize    = 0.45f;
+
+    t.numeralStyle        = NumeralStyle::None;
+    t.dialRadiusFraction  = 0.42f;
+    t.decorativeRings     = 0;
+    t.glowIntensity       = 0.15f;
+    t.breatheAmount       = 0.1f;
+    return t;
+}
+
+inline ClockTheme makeOrbitalTheme()
+{
+    ClockTheme t;
+    t.name = "Orbital";
+    t.orbital = true;
+    t.colors.dial           = QColor(12, 15, 21);
+    t.colors.rim            = QColor(27, 35, 48);
+    t.colors.hourHand       = QColor(91, 140, 255);   // hour arc  (blue)
+    t.colors.minuteHand     = QColor(46, 230, 196);   // minute arc (teal)
+    t.colors.secondHand     = QColor(255, 176, 46);   // second arc (amber)
+    t.colors.ticks          = QColor(27, 35, 48);
+    t.colors.cardinalTicks  = QColor(27, 35, 48);
+    t.colors.numerals       = QColor(231, 234, 240);  // center readout
+    t.colors.lume           = QColor(255, 255, 255);
+    t.colors.centerPin      = QColor(231, 234, 240);
+    t.colors.decorativeRing = QColor(27, 35, 48, 200);
+
+    t.numeralStyle        = NumeralStyle::None;
+    t.dialRadiusFraction  = 0.42f;
+    t.decorativeRings     = 0;
+    t.glowIntensity       = 1.0f;
+    t.breatheAmount       = 0.1f;
+    return t;
+}
+
+inline ClockTheme makeGuillocheTheme()
+{
+    ClockTheme t;
+    t.name = "Guilloche";
+    t.guilloche = true;
+    t.colors.dial           = QColor(14, 77, 57);    // emerald mid
+    t.colors.dialEdge       = QColor(6, 42, 32);     // dark emerald edge
+    t.colors.rim            = QColor(201, 168, 90);  // gold
+    t.colors.hourHand       = QColor(237, 214, 153); // gold
+    t.colors.minuteHand     = QColor(237, 214, 153);
+    t.colors.secondHand     = QColor(242, 230, 184);
+    t.colors.ticks          = QColor(231, 207, 143); // gold indices
+    t.colors.cardinalTicks  = QColor(245, 224, 165);
+    t.colors.numerals       = QColor(237, 214, 153);
+    t.colors.lume           = QColor(120, 220, 160);
+    t.colors.centerPin      = QColor(231, 207, 143);
+    t.colors.decorativeRing = QColor(201, 168, 90, 70);
+
+    t.hands.hourShape     = HandShape::Dauphine;
+    t.hands.minuteShape   = HandShape::Dauphine;
+    t.hands.secondShape   = HandShape::Needle;
+    t.hands.hourLength    = 0.50f;
+    t.hands.minuteLength  = 0.78f;
+    t.hands.secondLength  = 0.84f;
+    t.hands.hourWidth     = 0.075f;
+    t.hands.minuteWidth   = 0.055f;
+    t.hands.secondWidth   = 0.016f;
+
+    t.ticks.cardinalShape = TickShape::Rect;
+    t.ticks.hourShape     = TickShape::Rect;
+    t.ticks.minuteShape   = TickShape::None;
+    t.ticks.cardinalSize  = 1.6f;
+    t.ticks.hourSize      = 1.0f;
+
+    t.numeralStyle        = NumeralStyle::None;
+    t.dialRadiusFraction  = 0.42f;
+    t.decorativeRings     = 0;
+    t.glowIntensity       = 0.5f;
+    t.breatheAmount       = 0.12f;
+    return t;
+}
+
 inline ClockTheme makeDigitalTheme()
 {
     ClockTheme t;
     t.name = "Digital";
     t.isDigital = true;
+    t.digitalStyle = DigitalStyle::Neon;
+    return t;
+}
+
+inline ClockTheme makeSevenSegTheme()
+{
+    ClockTheme t;
+    t.name = "Seven Segment";
+    t.isDigital = true;
+    t.digitalStyle = DigitalStyle::SevenSegment;
+    t.colors.secondHand = QColor(31, 227, 255);   // cyan segment color
+    return t;
+}
+
+inline ClockTheme makeSplitFlapTheme()
+{
+    ClockTheme t;
+    t.name = "Split Flap";
+    t.isDigital = true;
+    t.digitalStyle = DigitalStyle::SplitFlap;
+    return t;
+}
+
+inline ClockTheme makeNixieTheme()
+{
+    ClockTheme t;
+    t.name = "Nixie";
+    t.isDigital = true;
+    t.digitalStyle = DigitalStyle::Nixie;
+    t.colors.secondHand = QColor(255, 138, 50);   // nixie orange
+    return t;
+}
+
+inline ClockTheme makeTerminalTheme()
+{
+    ClockTheme t;
+    t.name = "Terminal";
+    t.isDigital = true;
+    t.digitalStyle = DigitalStyle::Terminal;
+    t.colors.secondHand = QColor(54, 255, 116);   // phosphor green
     return t;
 }
 
@@ -526,7 +753,15 @@ inline QVector<ClockTheme> getAllClockThemes()
         makeMinimalistTheme(),
         makeChronographTheme(),
         makeNeonRetroTheme(),
-        makeDigitalTheme()
+        makeBauhausTheme(),
+        makeMondaineTheme(),
+        makeOrbitalTheme(),
+        makeGuillocheTheme(),
+        makeDigitalTheme(),
+        makeSevenSegTheme(),
+        makeSplitFlapTheme(),
+        makeNixieTheme(),
+        makeTerminalTheme()
     };
 }
 
