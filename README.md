@@ -4,6 +4,24 @@ Your favorite music player of the 90s, but in real life.
 
 Linamp is a retro Winamp-inspired music player for Linux/Raspberry Pi, built with C++/Qt 6. It features a classic skin-based UI with spectrum visualizer, and supports multiple audio sources through a pluggable architecture.
 
+> **This fork ([sl4ppy/linamp2](https://github.com/sl4ppy/linamp2)) extends the original [Rodmg/linamp](https://github.com/Rodmg/linamp) with:**
+>
+> - 📡 **VBAN** — stream audio output over the network to Voicemeeter Banana / VBAN receivers
+> - 🌀 **Geiss** — dreamlike audio-reactive warp visuals (15 warp modes, beat-synced transitions, chromatic dispersion, 2s crossfades) inspired by the 1998 Winamp plugin
+> - 🎆 **AVS** — Winamp AVS-style oscilloscope, starfield, water, mirror, and more
+> - 🕐 **Screensaver** — 7 themed clock faces (6 analog watch styles + neon digital) after 5 min idle
+> - 🔍 **Scalable UI** — 1x through 4x DPI scaling with per-scale stylesheets
+
+## The Hardware
+
+A physical Linamp2 unit I built — a custom enclosure with a wide touchscreen running the player, topped with a slot-loading CD drive.
+
+![The physical Linamp2 unit on a desk](screenshots/desk.jpg)
+
+![The Linamp2 unit in action](screenshots/linamp2.gif)
+
+## Screenshots
+
 ![Player view with active playback](screenshots/player-playing.png)
 
 ## Features
