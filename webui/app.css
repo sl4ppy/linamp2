@@ -79,6 +79,9 @@ input[type=range]{ accent-color:var(--green); height:22px; }
 .ss-row{ display:flex; gap:8px; }
 .ss-row .minibtn{ flex:1; }
 .clock-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
-.clock-cell{ padding:14px 8px; font-size:13px; text-align:center; color:var(--ink);
+.clock-cell{ padding:8px; text-align:center; color:var(--ink); display:flex;
+  flex-direction:column; align-items:center; gap:6px;
   background:var(--panel); border:1px solid var(--line); border-radius:8px; cursor:pointer; }
-.clock-cell:active{ border-color:var(--green); color:var(--green); }
+.clock-cell:active{ border-color:var(--green); }
+.clock-thumb{ width:100%; height:auto; border-radius:4px; display:block; }
+.clock-name{ font-size:12px; }
