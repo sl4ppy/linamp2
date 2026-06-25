@@ -977,17 +977,17 @@ void ScreenSaverView::paintDigitalSevenSeg(QPainter &painter)
     QString hh = QString::number(hour);
     QString mm = QString("%1").arg(tm.minute(), 2, 10, QChar('0'));
 
-    float dh = 64.0f * UI_SCALE;
-    float dw = 34.0f * UI_SCALE;
-    float th = 7.0f  * UI_SCALE;       // segment thickness
-    float dgap = 9.0f * UI_SCALE;
-    float colonW = 18.0f * UI_SCALE;
+    float dh = 32.0f * UI_SCALE;
+    float dw = 17.0f * UI_SCALE;
+    float th = 3.5f  * UI_SCALE;       // segment thickness
+    float dgap = 4.5f * UI_SCALE;
+    float colonW = 9.0f * UI_SCALE;
 
     QString digits = hh + mm;
     int nDigits = digits.size();
     float totalW = nDigits * dw + (nDigits - 1) * dgap + colonW;
     float totalH = dh;
-    float pad = 30.0f * UI_SCALE;       // room for glow + label
+    float pad = 15.0f * UI_SCALE;       // room for glow + label
 
     placeFloatingBlock(totalW + pad * 2, totalH + pad * 2);
     float x = m_posX + pad;
@@ -1023,14 +1023,14 @@ void ScreenSaverView::paintDigitalSevenSeg(QPainter &painter)
 
     // AM/PM + seconds label
     QFont lf("DejaVu Sans Mono");
-    lf.setPixelSize(static_cast<int>(13 * UI_SCALE));
+    lf.setPixelSize(static_cast<int>(8 * UI_SCALE));
     lf.setBold(true);
     painter.setFont(lf);
     QColor lcol = on; lcol.setAlphaF(0.6f);
     painter.setPen(lcol);
     QString label = QString(tm.hour() >= 12 ? "PM" : "AM") +
                     QString("   %1s").arg(tm.second(), 2, 10, QChar('0'));
-    painter.drawText(QRectF(x, y + dh + 6 * UI_SCALE, totalW, 20 * UI_SCALE),
+    painter.drawText(QRectF(x, y + dh + 4 * UI_SCALE, totalW, 12 * UI_SCALE),
                      Qt::AlignCenter, label);
 }
 
@@ -1043,10 +1043,13 @@ void ScreenSaverView::paintDigitalSplitFlap(QPainter &painter)
     QString hh = QString("%1").arg(hour, 2, 10, QChar('0'));
     QString mm = QString("%1").arg(tm.minute(), 2, 10, QChar('0'));
 
-    float tileW = 110.0f * UI_SCALE;
-    float tileH = 150.0f * UI_SCALE;
-    float gap   = 18.0f * UI_SCALE;
-    float labelH = 26.0f * UI_SCALE;
+    // Scale to fit the display height (caps at UI_SCALE on tall screens).
+    float s = qMin(static_cast<float>(UI_SCALE), height() * 0.0035f);
+
+    float tileW = 110.0f * s;
+    float tileH = 150.0f * s;
+    float gap   = 18.0f * s;
+    float labelH = 26.0f * s;
     float totalW = tileW * 2 + gap;
     float totalH = tileH + labelH;
 
@@ -1063,21 +1066,19 @@ void ScreenSaverView::paintDigitalSplitFlap(QPainter &painter)
         g.setColorAt(0.49, QColor(38, 38, 44));
         g.setColorAt(0.51, QColor(25, 25, 32));
         g.setColorAt(1.0,  QColor(32, 32, 40));
-        painter.setPen(QPen(QColor(0, 0, 0), 1.0f * UI_SCALE));
+        painter.setPen(QPen(QColor(0, 0, 0), 1.0f * s));
         painter.setBrush(g);
-        painter.drawRoundedRect(tile, 10 * UI_SCALE, 10 * UI_SCALE);
+        painter.drawRoundedRect(tile, 10 * s, 10 * s);
 
         // center seam
-        painter.setPen(QPen(QColor(5, 5, 7), 3.0f * UI_SCALE));
+        painter.setPen(QPen(QColor(5, 5, 7), 3.0f * s));
         painter.drawLine(QPointF(x, y0 + tileH * 0.5f),
                          QPointF(x + tileW, y0 + tileH * 0.5f));
         // side axles
         painter.setPen(Qt::NoPen);
         painter.setBrush(QColor(10, 10, 12));
-        painter.drawRect(QRectF(x - 4 * UI_SCALE, y0 + tileH * 0.5f - 6 * UI_SCALE,
-                                4 * UI_SCALE, 12 * UI_SCALE));
-        painter.drawRect(QRectF(x + tileW, y0 + tileH * 0.5f - 6 * UI_SCALE,
-                                4 * UI_SCALE, 12 * UI_SCALE));
+        painter.drawRect(QRectF(x - 4 * s, y0 + tileH * 0.5f - 6 * s, 4 * s, 12 * s));
+        painter.drawRect(QRectF(x + tileW, y0 + tileH * 0.5f - 6 * s, 4 * s, 12 * s));
         // numerals
         QFont f("DejaVu Sans");
         f.setBold(true);
@@ -1088,10 +1089,10 @@ void ScreenSaverView::paintDigitalSplitFlap(QPainter &painter)
         painter.drawText(tile, Qt::AlignCenter, txt);
         // label
         QFont lf("DejaVu Sans"); lf.setBold(true);
-        lf.setPixelSize(static_cast<int>(13 * UI_SCALE));
+        lf.setPixelSize(static_cast<int>(13 * s));
         painter.setFont(lf);
         painter.setPen(QColor(154, 154, 160));
-        painter.drawText(QRectF(x, y0 + tileH + 4 * UI_SCALE, tileW, labelH),
+        painter.drawText(QRectF(x, y0 + tileH + 4 * s, tileW, labelH),
                          Qt::AlignCenter, lbl);
     };
 
@@ -1109,12 +1110,14 @@ void ScreenSaverView::paintDigitalNixie(QPainter &painter)
                        .arg(hour, 2, 10, QChar('0'))
                        .arg(tm.minute(), 2, 10, QChar('0'));
 
-    float tubeW = 60.0f * UI_SCALE;
-    float tubeH = 140.0f * UI_SCALE;
-    float gap   = 12.0f * UI_SCALE;
+    // Scale to fit the display height (caps at UI_SCALE on tall screens).
+    float s = qMin(static_cast<float>(UI_SCALE), height() * 0.0033f);
+    float tubeW = 60.0f * s;
+    float tubeH = 140.0f * s;
+    float gap   = 12.0f * s;
     float totalW = tubeW * 4 + gap * 3;
     float totalH = tubeH;
-    float pad = 22.0f * UI_SCALE;
+    float pad = 22.0f * s;
 
     placeFloatingBlock(totalW + pad * 2, totalH + pad * 2);
     float x = m_posX + pad;
@@ -1154,23 +1157,23 @@ void ScreenSaverView::paintDigitalNixie(QPainter &painter)
         gg.setColorAt(0.0, QColor(60, 55, 48, 140));
         gg.setColorAt(0.5, QColor(30, 28, 26, 90));
         gg.setColorAt(1.0, QColor(50, 46, 40, 140));
-        painter.setPen(QPen(QColor(120, 110, 95, 130), 1.0f * UI_SCALE));
+        painter.setPen(QPen(QColor(120, 110, 95, 130), 1.0f * s));
         painter.setBrush(gg);
         painter.drawRoundedRect(tube, tubeW * 0.45f, tubeW * 0.45f);
         // caps
         painter.setPen(Qt::NoPen);
         painter.setBrush(QColor(34, 29, 24));
-        painter.drawRoundedRect(QRectF(x + tubeW * 0.18f, y - 6 * UI_SCALE,
-                                       tubeW * 0.64f, 8 * UI_SCALE), 3, 3);
-        painter.drawRoundedRect(QRectF(x + tubeW * 0.18f, y + tubeH - 2 * UI_SCALE,
-                                       tubeW * 0.64f, 8 * UI_SCALE), 3, 3);
+        painter.drawRoundedRect(QRectF(x + tubeW * 0.18f, y - 6 * s,
+                                       tubeW * 0.64f, 8 * s), 3, 3);
+        painter.drawRoundedRect(QRectF(x + tubeW * 0.18f, y + tubeH - 2 * s,
+                                       tubeW * 0.64f, 8 * s), 3, 3);
         // ghost cathode
         painter.setFont(df);
         QColor ghost = orange; ghost.setAlphaF(0.08f);
         painter.setPen(ghost);
         painter.drawText(tube, Qt::AlignCenter, "8");
         // lit digit
-        glowText(QString(digits.at(i)), df, tube, orange, 7.0f * UI_SCALE);
+        glowText(QString(digits.at(i)), df, tube, orange, 7.0f * s);
         x += tubeW + gap;
     }
 
@@ -1179,8 +1182,8 @@ void ScreenSaverView::paintDigitalNixie(QPainter &painter)
     QColor cglow = orange; cglow.setAlphaF(0.5f);
     painter.setPen(Qt::NoPen);
     painter.setBrush(cglow);
-    painter.drawEllipse(QPointF(midX, y + tubeH * 0.38f), 4 * UI_SCALE, 4 * UI_SCALE);
-    painter.drawEllipse(QPointF(midX, y + tubeH * 0.62f), 4 * UI_SCALE, 4 * UI_SCALE);
+    painter.drawEllipse(QPointF(midX, y + tubeH * 0.38f), 4 * s, 4 * s);
+    painter.drawEllipse(QPointF(midX, y + tubeH * 0.62f), 4 * s, 4 * s);
 }
 
 // --- Terminal / CRT ---
@@ -1202,14 +1205,16 @@ void ScreenSaverView::paintDigitalTerminal(QPainter &painter)
                  ? m_currentTheme.colors.secondHand : QColor(54, 255, 116);
     QColor dim   = green.darker(170);
 
+    // Scale to fit the display height (caps at UI_SCALE on tall screens).
+    float s = qMin(static_cast<float>(UI_SCALE), height() * 0.0032f);
     QFont mono("DejaVu Sans Mono");
-    mono.setPixelSize(static_cast<int>(16 * UI_SCALE));
+    mono.setPixelSize(static_cast<int>(16 * s));
     QFont big("DejaVu Sans Mono");
     big.setBold(true);
-    big.setPixelSize(static_cast<int>(34 * UI_SCALE));
+    big.setPixelSize(static_cast<int>(34 * s));
 
     QFontMetrics fmM(mono), fmB(big);
-    float pad = 22.0f * UI_SCALE;
+    float pad = 22.0f * s;
     float lh  = fmM.height() * 1.35f;
     float bigH = fmB.height();
     float contentW = qMax(qMax(fmM.horizontalAdvance(prompt + " date"),
@@ -1224,13 +1229,13 @@ void ScreenSaverView::paintDigitalTerminal(QPainter &painter)
     painter.setRenderHint(QPainter::Antialiasing, true);
 
     // CRT screen panel
-    painter.setPen(QPen(green.darker(220), 1.0f * UI_SCALE));
+    painter.setPen(QPen(green.darker(220), 1.0f * s));
     painter.setBrush(QColor(2, 6, 4));
-    painter.drawRoundedRect(panel, 10 * UI_SCALE, 10 * UI_SCALE);
+    painter.drawRoundedRect(panel, 10 * s, 10 * s);
 
     painter.save();
     QPainterPath clip;
-    clip.addRoundedRect(panel, 10 * UI_SCALE, 10 * UI_SCALE);
+    clip.addRoundedRect(panel, 10 * s, 10 * s);
     painter.setClipPath(clip);
 
     float tx = m_posX + pad;
@@ -1263,7 +1268,7 @@ void ScreenSaverView::paintDigitalTerminal(QPainter &painter)
 
     // Scanlines
     painter.setPen(QPen(QColor(0, 0, 0, 46), 1.0f));
-    for (float yy = panel.top(); yy < panel.bottom(); yy += 3.0f * UI_SCALE)
+    for (float yy = panel.top(); yy < panel.bottom(); yy += 3.0f * s)
         painter.drawLine(QPointF(panel.left(), yy), QPointF(panel.right(), yy));
 
     painter.restore();
