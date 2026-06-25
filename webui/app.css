@@ -13,8 +13,6 @@ h1{ font-size:18px; letter-spacing:.12em; margin:.2em 0; }
 .screen{ display:flex; gap:12px; margin:12px 0; padding:12px; background:var(--lcd);
   border:1px solid var(--line); border-radius:10px;
   font-family:"DejaVu Sans Mono",ui-monospace,monospace; color:var(--green); }
-.spectrum{ width:160px; height:80px; image-rendering:pixelated; flex:0 0 auto;
-  background:#020805; border:1px solid #15241b; border-radius:4px; }
 .screen-info{ flex:1; min-width:0; }
 .track{ font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   text-shadow:0 0 8px rgba(51,255,136,.4); }
@@ -43,7 +41,7 @@ h1{ font-size:18px; letter-spacing:.12em; margin:.2em 0; }
 .row input[type=range]{ flex:1; }
 .val{ font-family:"DejaVu Sans Mono",monospace; font-size:13px; min-width:34px; text-align:right; }
 input[type=range]{ accent-color:var(--green); height:22px; }
-@media (max-width:380px){ .spectrum{ width:120px; } .tbtn{ font-size:18px; height:48px; } }
+@media (max-width:380px){ .tbtn{ font-size:18px; height:48px; } }
 .tabs{ display:flex; gap:6px; margin:10px 0 4px; }
 .tab{ flex:1; padding:9px; font-size:13px; color:var(--dim); background:var(--panel);
   border:1px solid var(--line); border-radius:8px; cursor:pointer; }

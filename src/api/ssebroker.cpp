@@ -11,7 +11,6 @@ SseBroker::SseBroker(WebStateHub *hub, QObject *parent)
 {
     connect(hub, &WebStateHub::stateChanged,    this, &SseBroker::onStateChanged);
     connect(hub, &WebStateHub::positionChanged, this, &SseBroker::onPositionChanged);
-    connect(hub, &WebStateHub::spectrum,        this, &SseBroker::onSpectrum);
 
     m_heartbeat = new QTimer(this);
     m_heartbeat->setInterval(15000);
@@ -31,7 +30,6 @@ void SseBroker::addClient(QTcpSocket *socket)
     socket->write(headers);
     socket->flush();
     m_clients.insert(socket);
-    if (m_clients.size() == 1) m_hub->setSpectrumActive(true);
 
     const QByteArray data = QJsonDocument(m_hub->snapshot()).toJson(QJsonDocument::Compact);
     writeEvent(socket, "status", data);
@@ -40,7 +38,6 @@ void SseBroker::addClient(QTcpSocket *socket)
 void SseBroker::removeClient(QTcpSocket *socket)
 {
     m_clients.remove(socket);
-    if (m_clients.isEmpty()) m_hub->setSpectrumActive(false);
 }
 
 void SseBroker::writeEvent(QTcpSocket *s, const char *event, const QByteArray &data)
@@ -80,17 +77,6 @@ void SseBroker::onPositionChanged(qint64 ms)
     m_lastPosSec = sec;
     const QByteArray data = "{\"positionMs\":" + QByteArray::number(ms) + "}";
     broadcast("position", data);
-}
-
-void SseBroker::onSpectrum(const QVector<int> &bars)
-{
-    QByteArray data = "[";
-    for (int i = 0; i < bars.size(); ++i) {
-        if (i) data += ',';
-        data += QByteArray::number(bars[i]);
-    }
-    data += "]";
-    broadcast("spectrum", data);
 }
 
 void SseBroker::sendHeartbeat()

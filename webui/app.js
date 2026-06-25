@@ -12,26 +12,6 @@ let seeking = false;     // user dragging the seek bar
 let volTouching = false; // user dragging volume
 let balTouching = false; // user dragging balance
 
-// ---- spectrum canvas ----
-const canvas = $("spectrum");
-const ctx = canvas.getContext("2d");
-let bars = new Array(19).fill(0);
-let smooth = new Array(19).fill(0);
-function drawSpectrum() {
-  const w = canvas.width, h = canvas.height, n = bars.length;
-  ctx.clearRect(0, 0, w, h);
-  const bw = w / n;
-  for (let i = 0; i < n; i++) {
-    smooth[i] = Math.max(bars[i], smooth[i] - 2); // falloff
-    const bh = (smooth[i] / 40) * h;
-    const hue = 120 - (smooth[i] / 40) * 120;     // green→red
-    ctx.fillStyle = `hsl(${hue} 90% 50%)`;
-    ctx.fillRect(i * bw + 1, h - bh, bw - 1, bh);
-  }
-  requestAnimationFrame(drawSpectrum);
-}
-requestAnimationFrame(drawSpectrum);
-
 // ---- status rendering ----
 function setFlag(id, on) { $(id).classList.toggle("on", !!on); }
 function applyStatus(s) {
@@ -105,7 +85,6 @@ function connect() {
   es.addEventListener("error", () => { $("conn").textContent = "reconnecting…"; $("conn").className = "conn off"; });
   es.addEventListener("status",   (e) => applyStatus(JSON.parse(e.data)));
   es.addEventListener("position", (e) => applyPosition(JSON.parse(e.data).positionMs));
-  es.addEventListener("spectrum", (e) => { bars = JSON.parse(e.data); });
 }
 connect();
 

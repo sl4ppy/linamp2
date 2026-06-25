@@ -4,7 +4,6 @@
 #include <QObject>
 #include <QSet>
 #include <QByteArray>
-#include <QVector>
 
 class QTcpSocket;
 class QTimer;
@@ -28,7 +27,6 @@ public:
 private slots:
     void onStateChanged();
     void onPositionChanged(qint64 ms);
-    void onSpectrum(const QVector<int> &bars);
     void sendHeartbeat();
 
 private:

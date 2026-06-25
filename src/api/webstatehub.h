@@ -5,8 +5,6 @@
 #include <QJsonObject>
 #include <QMediaMetaData>
 #include <QAudioFormat>
-#include <QVector>
-#include <QElapsedTimer>
 #include "mediaplayer.h"
 
 class AudioSource;
@@ -28,12 +26,10 @@ public:
 
 public slots:
     void setView(const QString &view);
-    void setSpectrumActive(bool active);
 
 signals:
     void stateChanged();
     void positionChanged(qint64 positionMs);
-    void spectrum(const QVector<int> &bars);
 
 private slots:
     void onPlaybackState(MediaPlayer::PlaybackState state);
@@ -51,12 +47,6 @@ private slots:
 
 private:
     AudioSourceCoordinator *m_coord;
-
-    // Spectrum (computed from PCM, gated on SSE clients)
-    bool m_spectrumActive = false;
-    float m_xscale[20] = {0};
-    QElapsedTimer m_spectrumClock;
-    void computeSpectrum(const QByteArray &data, const QAudioFormat &format);
 
     QString m_state = "stopped";
     QString m_artist, m_title, m_album, m_codec, m_source;
