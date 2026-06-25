@@ -563,3 +563,42 @@ QJsonObject MainWindow::apiAddPath(const QString &rel)
     res["added"] = urls.size();
     return res;
 }
+
+QJsonObject MainWindow::apiSources() const
+{
+    QJsonObject o;
+    o["ok"] = true;
+    o["current"] = coordinator->currentSourceLabel();
+    QJsonArray arr;
+    for (const QString &l : coordinator->sourceLabelList())
+        arr.append(l);
+    o["sources"] = arr;
+    o["vban"] = apiVbanState();
+    return o;
+}
+
+bool MainWindow::apiSetSource(const QString &nameOrIndex)
+{
+    const QStringList labels = coordinator->sourceLabelList();
+    int idx = -1;
+    for (int i = 0; i < labels.size(); ++i)
+        if (labels[i].compare(nameOrIndex, Qt::CaseInsensitive) == 0) { idx = i; break; }
+    if (idx < 0) {
+        bool ok = false;
+        const int n = nameOrIndex.toInt(&ok);
+        if (ok && n >= 0 && n < labels.size()) idx = n;
+    }
+    if (idx < 0) return false;
+    coordinator->setSource(idx);
+    return true;
+}
+
+void MainWindow::apiVban(bool on)
+{
+    if (vbanSender) vbanSender->setEnabled(on);
+}
+
+bool MainWindow::apiVbanState() const
+{
+    return vbanSender ? vbanSender->isEnabled() : false;
+}

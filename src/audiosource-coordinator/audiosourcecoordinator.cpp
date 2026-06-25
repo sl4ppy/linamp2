@@ -159,3 +159,8 @@ QString AudioSourceCoordinator::currentSourceLabel() const
         return QString();
     return sourceLabels.at(currentSource);
 }
+
+QStringList AudioSourceCoordinator::sourceLabelList() const
+{
+    return sourceLabels;   // QList<QString> is QStringList in Qt 6
+}

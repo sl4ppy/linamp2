@@ -53,6 +53,12 @@ public:
     QJsonObject apiBrowse(const QString &rel) const;
     QJsonObject apiAddPath(const QString &rel);
 
+    // Web API: source switching + VBAN
+    QJsonObject apiSources() const;
+    bool apiSetSource(const QString &nameOrIndex);
+    void apiVban(bool on);
+    bool apiVbanState() const;
+
     QStackedLayout *viewStack;
 
     PlayerView *player;

@@ -2,6 +2,7 @@
 #define AUDIOSOURCECOORDINATOR_H
 
 #include <QObject>
+#include <QStringList>
 #include "audiosource.h"
 #include "systemaudiocontrol.h"
 #include "playerview.h"
@@ -17,6 +18,7 @@ public:
     int currentVolume() const;
     int currentBalance() const;
     QString currentSourceLabel() const;
+    QStringList sourceLabelList() const;   // all source labels in index order
 
 signals:
     void sourceChanged(int source);
