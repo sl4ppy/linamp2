@@ -279,8 +279,42 @@ bool ApiServer::handleTransport(const QString &path, const HttpRequest &req, Res
     return false;
 }
 
-bool ApiServer::handleScreensaver(const QString &, const HttpRequest &, Response &)
+bool ApiServer::handleScreensaver(const QString &path, const HttpRequest &req, Response &out)
 {
+    if (path == "/api/screensaver/on") {
+        m_window->apiTriggerScreensaver();
+        out = {200, okJson()};
+        return true;
+    }
+    if (path == "/api/screensaver/off") {
+        m_window->apiDismissScreensaver();
+        out = {200, okJson()};
+        return true;
+    }
+    if (path == "/api/clock") {
+        int index = -1;
+        if (req.query.contains("index")) {
+            if (!parseIntParam(req.query.value("index"), index)) {
+                out = {400, errJson("index must be an integer")};
+                return true;
+            }
+        } else if (req.query.contains("face")) {
+            index = ScreenSaverView::faceIndexForName(req.query.value("face"));
+            if (index < 0) {
+                out = {400, errJson("unknown face name")};
+                return true;
+            }
+        } else {
+            out = {400, errJson("clock requires face or index")};
+            return true;
+        }
+        if (!m_window->apiShowClockFace(index)) {
+            out = {400, errJson("index out of range")};
+            return true;
+        }
+        out = {200, okJson()};
+        return true;
+    }
     return false;
 }
 
