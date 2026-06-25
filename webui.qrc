@@ -3,5 +3,6 @@
         <file>webui/index.html</file>
         <file>webui/app.css</file>
         <file>webui/app.js</file>
+        <file>webui/api.js</file>
     </qresource>
 </RCC>

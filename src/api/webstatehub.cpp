@@ -1,6 +1,34 @@
 #include "webstatehub.h"
 #include "audiosource.h"
 #include "audiosourcecoordinator.h"
+#include "fft.h"
+#include <algorithm>
+#include <cmath>
+#include <cstring>
+
+static float pcmToFloatSample(qint16 pcm) { return float(pcm) / 32768.0f; }
+
+static void computeLogXscaleBands(float *xscale, int bands)
+{
+    for (int i = 0; i <= bands; i++)
+        xscale[i] = powf(256, (float)i / bands) - 0.5f;
+}
+
+static float computeOneBand(const float *freq, const float *xscale, int band, int bands)
+{
+    int a = ceilf(xscale[band]);
+    int b = floorf(xscale[band + 1]);
+    float n = 0;
+    if (b < a) {
+        n += freq[b] * (xscale[band + 1] - xscale[band]);
+    } else {
+        if (a > 0) n += freq[a - 1] * (a - xscale[band]);
+        for (; a < b; a++) n += freq[a];
+        if (b < 256) n += freq[b] * (xscale[band + 1] - b);
+    }
+    n *= (float)bands / 12;
+    return 20 * log10f(n);
+}
 
 static QString stateString(MediaPlayer::PlaybackState s)
 {
@@ -33,6 +61,9 @@ WebStateHub::WebStateHub(AudioSourceCoordinator *coordinator,
     m_volume  = coordinator->currentVolume();
     m_balance = coordinator->currentBalance();
     m_source  = coordinator->currentSourceLabel();
+
+    computeLogXscaleBands(m_xscale, 19);
+    m_spectrumClock.start();
 }
 
 QJsonObject WebStateHub::snapshot() const
@@ -106,7 +137,7 @@ void WebStateHub::onPosition(qint64 ms)
     emit positionChanged(ms);
 }
 
-void WebStateHub::onFormat(const QByteArray &, QAudioFormat format)
+void WebStateHub::onFormat(const QByteArray &data, QAudioFormat format)
 {
     bool changed = false;
     if (format.channelCount() > 0 && format.channelCount() != m_channels) {
@@ -118,6 +149,49 @@ void WebStateHub::onFormat(const QByteArray &, QAudioFormat format)
         changed = true;
     }
     if (changed) emit stateChanged();
+
+    if (m_spectrumActive && m_spectrumClock.elapsed() >= 33) {
+        m_spectrumClock.restart();
+        computeSpectrum(data, format);
+    }
+}
+
+void WebStateHub::setSpectrumActive(bool active)
+{
+    m_spectrumActive = active;
+}
+
+void WebStateHub::computeSpectrum(const QByteArray &data, const QAudioFormat &format)
+{
+    const int channels = format.channelCount();
+    if (channels < 1 || format.sampleFormat() != QAudioFormat::Int16)
+        return;
+    const int bytesPerFrame = 2 * channels;
+    if (data.size() < N * bytesPerFrame)   // N = 512 from fft.h
+        return;
+
+    float mono[N];
+    const char *ptr = data.constData();
+    for (int i = 0; i < N; ++i) {
+        if (channels == 1) {
+            mono[i] = pcmToFloatSample(*reinterpret_cast<const qint16 *>(ptr));
+        } else {
+            const qint16 l = *reinterpret_cast<const qint16 *>(ptr);
+            const qint16 r = *reinterpret_cast<const qint16 *>(ptr + 2);
+            mono[i] = (pcmToFloatSample(l) + pcmToFloatSample(r)) / 2.0f;
+        }
+        ptr += bytesPerFrame;
+    }
+
+    float freq[N / 2];
+    calc_freq(mono, freq);
+
+    QVector<int> bars(19);
+    for (int i = 0; i < 19; ++i) {
+        int x = 40 + static_cast<int>(computeOneBand(freq, m_xscale, i, 19));
+        bars[i] = std::clamp(x, 0, 40);
+    }
+    emit spectrum(bars);
 }
 
 void WebStateHub::onVolume(int v)   { if (v != m_volume)  { m_volume = v;  emit stateChanged(); } }
