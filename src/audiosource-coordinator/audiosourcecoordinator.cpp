@@ -120,3 +120,19 @@ void AudioSourceCoordinator::addSource(AudioSource *source, QString label, bool 
         setSource(idx);
     }
 }
+
+AudioSource *AudioSourceCoordinator::activeSource() const
+{
+    if (currentSource < 0 || currentSource >= sources.size())
+        return nullptr;
+    return sources.at(currentSource);
+}
+
+void AudioSourceCoordinator::play()     { if (auto *s = activeSource()) s->handlePlay(); }
+void AudioSourceCoordinator::pause()    { if (auto *s = activeSource()) s->handlePause(); }
+void AudioSourceCoordinator::stop()     { if (auto *s = activeSource()) s->handleStop(); }
+void AudioSourceCoordinator::next()     { if (auto *s = activeSource()) s->handleNext(); }
+void AudioSourceCoordinator::previous() { if (auto *s = activeSource()) s->handlePrevious(); }
+void AudioSourceCoordinator::seek(int ms) { if (auto *s = activeSource()) s->handleSeek(ms); }
+void AudioSourceCoordinator::shuffle()  { if (auto *s = activeSource()) s->handleShuffle(); }
+void AudioSourceCoordinator::repeat()   { if (auto *s = activeSource()) s->handleRepeat(); }
