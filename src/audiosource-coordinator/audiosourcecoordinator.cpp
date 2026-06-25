@@ -14,6 +14,10 @@ AudioSourceCoordinator::AudioSourceCoordinator(QObject *parent, PlayerView *play
     connect(system_audio, &SystemAudioControl::balanceChanged, view, &PlayerView::setBalance);
     connect(view, &PlayerView::balanceChanged, this, &AudioSourceCoordinator::setBalance);
 
+    connect(system_audio, &SystemAudioControl::volumeChanged,
+            this, &AudioSourceCoordinator::volumeChanged);
+    connect(system_audio, &SystemAudioControl::balanceChanged,
+            this, &AudioSourceCoordinator::balanceChanged);
 }
 
 void AudioSourceCoordinator::setSource(int newSource)
@@ -136,3 +140,20 @@ void AudioSourceCoordinator::previous() { if (auto *s = activeSource()) s->handl
 void AudioSourceCoordinator::seek(int ms) { if (auto *s = activeSource()) s->handleSeek(ms); }
 void AudioSourceCoordinator::shuffle()  { if (auto *s = activeSource()) s->handleShuffle(); }
 void AudioSourceCoordinator::repeat()   { if (auto *s = activeSource()) s->handleRepeat(); }
+
+int AudioSourceCoordinator::currentVolume() const
+{
+    return system_audio->getVolume();
+}
+
+int AudioSourceCoordinator::currentBalance() const
+{
+    return system_audio->getBalance();
+}
+
+QString AudioSourceCoordinator::currentSourceLabel() const
+{
+    if (currentSource < 0 || currentSource >= sourceLabels.size())
+        return QString();
+    return sourceLabels.at(currentSource);
+}
