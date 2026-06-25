@@ -42,11 +42,13 @@ private slots:
 private:
     struct Response {
         int status;
-        QByteArray json;
+        QByteArray body;
+        QByteArray contentType = "application/json";
     };
 
     Response route(const HttpRequest &req);
     bool handleMeta(const QString &path, const HttpRequest &req, Response &out);
+    bool handleStatic(const QString &path, Response &out);
     bool handleTransport(const QString &path, const HttpRequest &req, Response &out);   // Task 5
     bool handleScreensaver(const QString &path, const HttpRequest &req, Response &out); // Task 6
     bool authorized(const HttpRequest &req) const;

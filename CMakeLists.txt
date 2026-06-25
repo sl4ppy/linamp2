@@ -182,6 +182,7 @@ qt_add_executable(player WIN32 MACOSX_BUNDLE
     src/shared/linampslider.cpp
     src/main.cpp
     uiassets.qrc
+    webui.qrc
 )
 
 target_include_directories(player PRIVATE

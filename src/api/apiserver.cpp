@@ -9,6 +9,7 @@
 #include <QJsonDocument>
 #include <QStringList>
 #include <QDebug>
+#include <QFile>
 
 #include "audiosourcecoordinator.h"
 #include "mainwindow.h"
@@ -230,6 +231,7 @@ ApiServer::Response ApiServer::route(const HttpRequest &req)
 
     Response out;
     if (handleMeta(path, req, out))        return out;
+    if (handleStatic(path, out))           return out;
     if (handleTransport(path, req, out))   return out;
     if (handleScreensaver(path, req, out)) return out;
     return {404, errJson("unknown endpoint")};
@@ -238,7 +240,7 @@ ApiServer::Response ApiServer::route(const HttpRequest &req)
 bool ApiServer::handleMeta(const QString &path, const HttpRequest &req, Response &out)
 {
     Q_UNUSED(req);
-    if (path == "/" || path == "/api/health") {
+    if (path == "/api/health") {
         out = {200, QByteArrayLiteral("{\"ok\":true,\"service\":\"linamp\"}")};
         return true;
     }
@@ -252,6 +254,29 @@ bool ApiServer::handleMeta(const QString &path, const HttpRequest &req, Response
         o["faces"] = QJsonArray::fromStringList(ScreenSaverView::faceNames());
         out = {200, QJsonDocument(o).toJson(QJsonDocument::Compact)};
         return true;
+    }
+    return false;
+}
+
+bool ApiServer::handleStatic(const QString &path, Response &out)
+{
+    struct Asset { const char *route; const char *res; const char *type; };
+    static const Asset assets[] = {
+        { "/",           ":/webui/index.html", "text/html; charset=utf-8" },
+        { "/index.html", ":/webui/index.html", "text/html; charset=utf-8" },
+        { "/app.css",    ":/webui/app.css",    "text/css; charset=utf-8" },
+        { "/app.js",     ":/webui/app.js",     "application/javascript; charset=utf-8" },
+    };
+    for (const Asset &a : assets) {
+        if (path == a.route) {
+            QFile f(QString::fromLatin1(a.res));
+            if (!f.open(QIODevice::ReadOnly)) {
+                out = {404, errJson("asset not found")};
+                return true;
+            }
+            out = {200, f.readAll(), a.type};
+            return true;
+        }
     }
     return false;
 }
@@ -350,10 +375,10 @@ bool ApiServer::handleScreensaver(const QString &path, const HttpRequest &req, R
 
 void ApiServer::sendResponse(QTcpSocket *socket, const Response &resp)
 {
-    QByteArray body = resp.json;
+    const QByteArray body = resp.body;
     QByteArray out;
     out += "HTTP/1.1 " + QByteArray::number(resp.status) + " " + reasonPhrase(resp.status) + "\r\n";
-    out += "Content-Type: application/json\r\n";
+    out += "Content-Type: " + resp.contentType + "\r\n";
     out += "Content-Length: " + QByteArray::number(body.size()) + "\r\n";
     out += "Access-Control-Allow-Origin: *\r\n";
     out += "Connection: close\r\n\r\n";

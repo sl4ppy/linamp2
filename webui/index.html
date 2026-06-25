@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Linamp Remote</title>
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <main class="wrap">
+    <header><h1>LINAMP <span class="dim">REMOTE</span></h1><div id="conn" class="conn off">connecting…</div></header>
+    <section class="lcd">
+      <div id="track" class="track">—</div>
+      <div class="meta">
+        <span id="bitrate">— kbps</span> · <span id="srate">— kHz</span> · <span id="chan">—</span>
+      </div>
+      <div class="time"><span id="pos">0:00</span> / <span id="dur">0:00</span></div>
+      <div id="state" class="state">stopped</div>
+    </section>
+    <section class="rows">
+      <div class="row"><span class="lbl">vol</span><progress id="vol" max="100" value="0"></progress><span id="volv">0</span></div>
+      <div class="row"><span class="lbl">bal</span><span id="balv">center</span></div>
+      <div class="row"><span class="lbl">source</span><span id="source">—</span></div>
+    </section>
+    <p class="note">Phase 1 — read-only live status. Controls arrive in Phase 2.</p>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>
