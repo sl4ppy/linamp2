@@ -65,3 +65,20 @@ input[type=range]{ accent-color:var(--green); height:22px; }
 .fb-list li{ cursor:pointer; }
 .fb-ico{ width:18px; text-align:center; }
 .fb-list .add{ margin-left:auto; color:var(--accent); }
+.tabs{ flex-wrap:wrap; }
+.tab{ min-width:72px; }
+.sec-head{ color:var(--dim); font-size:12px; text-transform:uppercase; letter-spacing:.1em;
+  margin:14px 0 8px; }
+.src-list{ display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+.src-btn{ padding:14px; font-size:14px; color:var(--ink); background:var(--panel);
+  border:1px solid var(--line); border-radius:8px; cursor:pointer; }
+.src-btn.on{ color:var(--green); border-color:var(--green); box-shadow:0 0 0 1px var(--green) inset; }
+.bigtog{ width:100%; padding:14px; font-size:14px; color:var(--ink); background:var(--panel);
+  border:1px solid var(--line); border-radius:8px; cursor:pointer; }
+.bigtog.on{ color:var(--green); border-color:var(--green); }
+.ss-row{ display:flex; gap:8px; }
+.ss-row .minibtn{ flex:1; }
+.clock-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.clock-cell{ padding:14px 8px; font-size:13px; text-align:center; color:var(--ink);
+  background:var(--panel); border:1px solid var(--line); border-radius:8px; cursor:pointer; }
+.clock-cell:active{ border-color:var(--green); color:var(--green); }

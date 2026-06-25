@@ -233,6 +233,7 @@ ApiServer::Response ApiServer::route(const HttpRequest &req)
     if (handleMeta(path, req, out))        return out;
     if (handleStatic(path, out))           return out;
     if (handlePlaylist(path, req, out))    return out;
+    if (handleSources(path, req, out))     return out;
     if (handleTransport(path, req, out))   return out;
     if (handleScreensaver(path, req, out)) return out;
     return {404, errJson("unknown endpoint")};
@@ -411,6 +412,34 @@ bool ApiServer::handlePlaylist(const QString &path, const HttpRequest &req, Resp
     if (path == "/api/add") {
         QJsonObject o = m_window->apiAddPath(req.query.value("path"));
         out = {o.value("ok").toBool() ? 200 : 400, QJsonDocument(o).toJson(QJsonDocument::Compact)};
+        return true;
+    }
+    return false;
+}
+
+bool ApiServer::handleSources(const QString &path, const HttpRequest &req, Response &out)
+{
+    if (path == "/api/sources") {
+        out = {200, QJsonDocument(m_window->apiSources()).toJson(QJsonDocument::Compact)};
+        return true;
+    }
+    if (path == "/api/source") {
+        QString sel = req.query.value("name");
+        if (sel.isEmpty()) sel = req.query.value("index");
+        if (sel.isEmpty()) { out = {400, errJson("name or index required")}; return true; }
+        out = m_window->apiSetSource(sel) ? Response{200, okJson()} : Response{400, errJson("unknown source")};
+        return true;
+    }
+    if (path == "/api/vban") {
+        if (req.query.contains("on")) {
+            const QString v = req.query.value("on");
+            const bool on = (v == "1" || v.compare("true", Qt::CaseInsensitive) == 0);
+            m_window->apiVban(on);
+        }
+        QJsonObject o;
+        o["ok"] = true;
+        o["vban"] = m_window->apiVbanState();
+        out = {200, QJsonDocument(o).toJson(QJsonDocument::Compact)};
         return true;
     }
     return false;

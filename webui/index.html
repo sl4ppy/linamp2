@@ -17,6 +17,8 @@
       <button class="tab on" data-tab="player">Player</button>
       <button class="tab" data-tab="playlist">Playlist</button>
       <button class="tab" data-tab="files">Files</button>
+      <button class="tab" data-tab="sources">Sources</button>
+      <button class="tab" data-tab="clocks">Clocks</button>
     </nav>
     <div id="tab-player" class="panel">
     <section class="screen">
@@ -68,6 +70,21 @@
       <div class="fb-head"><button id="fb-up" class="minibtn">⬆ Up</button>
         <span id="fb-path" class="fb-path">/</span></div>
       <ul id="fb-list" class="fb-list"></ul>
+    </div>
+    <div id="tab-sources" class="panel hidden">
+      <div class="sec-head">Audio source</div>
+      <div id="src-list" class="src-list"></div>
+      <div class="sec-head">VBAN streaming</div>
+      <button id="vban-btn" class="bigtog">VBAN: —</button>
+    </div>
+    <div id="tab-clocks" class="panel hidden">
+      <div class="sec-head">Screensaver</div>
+      <div class="ss-row">
+        <button id="ss-on" class="minibtn">Show (random)</button>
+        <button id="ss-off" class="minibtn">Dismiss</button>
+      </div>
+      <div class="sec-head">Clock faces</div>
+      <div id="clock-grid" class="clock-grid"></div>
     </div>
   </main>
   <script type="module" src="/app.js"></script>
