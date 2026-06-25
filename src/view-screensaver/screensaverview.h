@@ -5,6 +5,7 @@
 #include <QTimer>
 #include <QDateTime>
 #include <QImage>
+#include <QStringList>
 #include "clockthemes.h"
 
 namespace Ui {
@@ -21,8 +22,13 @@ public:
     explicit ScreenSaverView(QWidget *parent = nullptr);
     ~ScreenSaverView();
 
+    // Face enumeration for the HTTP API
+    static QStringList faceNames();
+    static int faceIndexForName(const QString &name); // -1 if not found
+
 public slots:
     void start();
+    void start(int themeIndex); // start with a specific theme (-1 = random)
 
 protected:
     void paintEvent(QPaintEvent *event) override;
