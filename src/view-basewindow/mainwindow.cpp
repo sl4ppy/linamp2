@@ -2,6 +2,8 @@
 
 #include "mainwindow.h"
 #include "apiserver.h"
+#include "webstatehub.h"
+#include "ssebroker.h"
 #include "desktopplayerwindow.h"
 #include "qstandardpaths.h"
 #include "ui_desktopplayerwindow.h"
@@ -208,8 +210,11 @@ MainWindow::MainWindow(QWidget *parent)
     // Start the screensaver timer (idle from beginning)
     screenSaverTimer->start();
 
-    // HTTP control API (best-effort; never fatal)
-    apiServer = new ApiServer(coordinator, this, this);
+    // Web state aggregation + HTTP/SSE API
+    webState  = new WebStateHub(coordinator,
+                                { fileSource, btSource, cdSource, spotSource }, this);
+    sseBroker = new SseBroker(webState, this);
+    apiServer = new ApiServer(coordinator, this, webState, sseBroker, this);
 }
 
 MainWindow::~MainWindow()
@@ -221,18 +226,21 @@ MainWindow::~MainWindow()
 void MainWindow::showPlayer()
 {
     viewStack->setCurrentIndex(0);
+    if (webState) webState->setView("player");
     resetScreenSaverTimer();
 }
 
 void MainWindow::showPlaylist()
 {
     viewStack->setCurrentIndex(1);
+    if (webState) webState->setView("playlist");
     resetScreenSaverTimer();
 }
 
 void MainWindow::showMenu()
 {
     viewStack->setCurrentIndex(2);
+    if (webState) webState->setView("menu");
     resetScreenSaverTimer();
 }
 
@@ -240,12 +248,14 @@ void MainWindow::showAvs()
 {
     avsView->start();
     viewTransition->fadeTo(4);
+    if (webState) webState->setView("avs");
 }
 
 void MainWindow::showGeiss()
 {
     geissActive = true;
     viewTransition->fadeTo(5);
+    if (webState) webState->setView("geiss");
     screenSaverTimer->stop();
 }
 
@@ -339,6 +349,7 @@ void MainWindow::activateScreenSaver()
             qDebug() << "Activating Geiss visualizer";
             geissActive = true;
             viewTransition->fadeTo(5);
+            if (webState) webState->setView("geiss");
         }
         // If Geiss is already active, do nothing (let it keep running)
     } else {
@@ -354,6 +365,7 @@ void MainWindow::activateScreenSaver()
             screenSaverActive = true;
             screenSaver->start();
             viewStack->setCurrentIndex(3);
+            if (webState) webState->setView("screensaver");
         }
     }
 }
@@ -372,6 +384,7 @@ void MainWindow::deactivateScreenSaver()
     } else {
         viewStack->setCurrentIndex(0); // Screensaver exits instantly
     }
+    if (webState) webState->setView("player");
     resetScreenSaverTimer();
 }
 
@@ -379,6 +392,7 @@ void MainWindow::deactivateAvs()
 {
     avsView->stop();
     viewTransition->fadeTo(0); // Crossfade back to player
+    if (webState) webState->setView("player");
     resetScreenSaverTimer();
 }
 
@@ -397,6 +411,7 @@ void MainWindow::showClockScreensaver(int themeIndex)
     screenSaverActive = true;
     screenSaver->start(themeIndex);
     viewStack->setCurrentIndex(3); // ScreenSaverView
+    if (webState) webState->setView("screensaver");
     // Keep the idle timer running so normal idle behavior resumes after the
     // timeout: an API-selected face is shown now but is not pinned forever —
     // if music is playing it will yield to Geiss at the next idle activation.

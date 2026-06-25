@@ -9,9 +9,12 @@
 #include <QJsonDocument>
 #include <QStringList>
 #include <QDebug>
+#include <QFile>
 
 #include "audiosourcecoordinator.h"
 #include "mainwindow.h"
+#include "webstatehub.h"
+#include "ssebroker.h"
 #include "screensaverview.h"
 #include "mediaplayer.h"
 
@@ -38,6 +41,7 @@ static QByteArray reasonPhrase(int status)
     case 401: return "Unauthorized";
     case 404: return "Not Found";
     case 405: return "Method Not Allowed";
+    case 503: return "Service Unavailable";
     default:  return "OK";
     }
 }
@@ -108,14 +112,17 @@ HttpRequest parseRequest(const QByteArray &raw)
 
 // --- ApiServer ---
 
-ApiServer::ApiServer(AudioSourceCoordinator *coordinator, MainWindow *window, QObject *parent)
-    : QObject(parent), m_coordinator(coordinator), m_window(window)
+ApiServer::ApiServer(AudioSourceCoordinator *coordinator, MainWindow *window,
+                     WebStateHub *webState, SseBroker *sseBroker, QObject *parent)
+    : QObject(parent), m_coordinator(coordinator), m_window(window),
+      m_webState(webState), m_sseBroker(sseBroker)
 {
     QSettings settings;
-    m_enabled     = settings.value("api/enabled", true).toBool();
-    m_port        = static_cast<quint16>(settings.value("api/port", 8080).toInt());
-    m_bindAddress = settings.value("api/bindAddress", "0.0.0.0").toString();
-    m_token       = settings.value("api/token", "").toString();
+    m_enabled       = settings.value("api/enabled", true).toBool();
+    m_port          = static_cast<quint16>(settings.value("api/port", 8080).toInt());
+    m_bindAddress   = settings.value("api/bindAddress", "0.0.0.0").toString();
+    m_token         = settings.value("api/token", "").toString();
+    m_maxSseClients = settings.value("api/maxSseClients", 8).toInt();
 
     if (!m_enabled) {
         qInfo() << "[api] disabled via config";
@@ -142,6 +149,7 @@ void ApiServer::onNewConnection()
         QTcpSocket *socket = m_server->nextPendingConnection();
         connect(socket, &QTcpSocket::readyRead, this, &ApiServer::onReadyRead);
         connect(socket, &QTcpSocket::disconnected, this, [this, socket]() {
+            if (m_sseBroker) m_sseBroker->removeClient(socket);
             m_buffers.remove(socket);
             socket->deleteLater();
         });
@@ -167,6 +175,19 @@ void ApiServer::onReadyRead()
 
     HttpRequest req = parseRequest(buf);
     m_buffers.remove(socket);
+
+    if (req.valid && authorized(req) && req.method == "GET" && req.path == "/api/events") {
+        if (!m_sseBroker || m_sseBroker->clientCount() >= m_maxSseClients) {
+            sendResponse(socket, {503, errJson("too many SSE clients")});
+            socket->disconnectFromHost();
+            return;
+        }
+        // Hand the socket to the broker: stop parsing further reads and keep it
+        // open. The disconnected handler removes it from the broker and frees it.
+        disconnect(socket, &QTcpSocket::readyRead, this, &ApiServer::onReadyRead);
+        m_sseBroker->addClient(socket);
+        return;
+    }
 
     Response resp;
     if (!req.valid)
@@ -210,6 +231,7 @@ ApiServer::Response ApiServer::route(const HttpRequest &req)
 
     Response out;
     if (handleMeta(path, req, out))        return out;
+    if (handleStatic(path, out))           return out;
     if (handleTransport(path, req, out))   return out;
     if (handleScreensaver(path, req, out)) return out;
     return {404, errJson("unknown endpoint")};
@@ -218,8 +240,13 @@ ApiServer::Response ApiServer::route(const HttpRequest &req)
 bool ApiServer::handleMeta(const QString &path, const HttpRequest &req, Response &out)
 {
     Q_UNUSED(req);
-    if (path == "/" || path == "/api/health") {
+    if (path == "/api/health") {
         out = {200, QByteArrayLiteral("{\"ok\":true,\"service\":\"linamp\"}")};
+        return true;
+    }
+    if (path == "/api/status") {
+        if (!m_webState) { out = {503, errJson("state unavailable")}; return true; }
+        out = {200, QJsonDocument(m_webState->snapshot()).toJson(QJsonDocument::Compact)};
         return true;
     }
     if (path == "/api/clock/list") {
@@ -228,6 +255,29 @@ bool ApiServer::handleMeta(const QString &path, const HttpRequest &req, Response
         o["faces"] = QJsonArray::fromStringList(ScreenSaverView::faceNames());
         out = {200, QJsonDocument(o).toJson(QJsonDocument::Compact)};
         return true;
+    }
+    return false;
+}
+
+bool ApiServer::handleStatic(const QString &path, Response &out)
+{
+    struct Asset { const char *route; const char *res; const char *type; };
+    static const Asset assets[] = {
+        { "/",           ":/webui/index.html", "text/html; charset=utf-8" },
+        { "/index.html", ":/webui/index.html", "text/html; charset=utf-8" },
+        { "/app.css",    ":/webui/app.css",    "text/css; charset=utf-8" },
+        { "/app.js",     ":/webui/app.js",     "application/javascript; charset=utf-8" },
+    };
+    for (const Asset &a : assets) {
+        if (path == a.route) {
+            QFile f(QString::fromLatin1(a.res));
+            if (!f.open(QIODevice::ReadOnly)) {
+                out = {404, errJson("asset not found")};
+                return true;
+            }
+            out = {200, f.readAll(), a.type};
+            return true;
+        }
     }
     return false;
 }
@@ -326,10 +376,10 @@ bool ApiServer::handleScreensaver(const QString &path, const HttpRequest &req, R
 
 void ApiServer::sendResponse(QTcpSocket *socket, const Response &resp)
 {
-    QByteArray body = resp.json;
+    const QByteArray body = resp.body;
     QByteArray out;
     out += "HTTP/1.1 " + QByteArray::number(resp.status) + " " + reasonPhrase(resp.status) + "\r\n";
-    out += "Content-Type: application/json\r\n";
+    out += "Content-Type: " + resp.contentType + "\r\n";
     out += "Content-Length: " + QByteArray::number(body.size()) + "\r\n";
     out += "Access-Control-Allow-Origin: *\r\n";
     out += "Connection: close\r\n\r\n";

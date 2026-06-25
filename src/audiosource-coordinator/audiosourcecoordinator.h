@@ -14,8 +14,14 @@ public:
 
     void addSource(AudioSource *source, QString label, bool activate = false);
 
+    int currentVolume() const;
+    int currentBalance() const;
+    QString currentSourceLabel() const;
+
 signals:
     void sourceChanged(int source);
+    void volumeChanged(int volume);
+    void balanceChanged(int balance);
 
 public slots:
     void setSource(int source);

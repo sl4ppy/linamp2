@@ -137,6 +137,10 @@ qt_add_executable(player WIN32 MACOSX_BUNDLE
     src/vban/vbansender.h
     src/api/apiserver.cpp
     src/api/apiserver.h
+    src/api/webstatehub.cpp
+    src/api/webstatehub.h
+    src/api/ssebroker.cpp
+    src/api/ssebroker.h
     src/view-geiss/geisswidget.cpp
     src/view-geiss/geisswidget.h
     src/view-geiss/audioanalyzer.cpp
@@ -178,6 +182,7 @@ qt_add_executable(player WIN32 MACOSX_BUNDLE
     src/shared/linampslider.cpp
     src/main.cpp
     uiassets.qrc
+    webui.qrc
 )
 
 target_include_directories(player PRIVATE
