@@ -89,7 +89,8 @@ function connect() {
 connect();
 
 // ---- tabs ----
-const panels = { player: $("tab-player"), playlist: $("tab-playlist"), files: $("tab-files") };
+const panels = { player: $("tab-player"), playlist: $("tab-playlist"), files: $("tab-files"),
+  sources: $("tab-sources"), clocks: $("tab-clocks") };
 let activeTab = "player";
 document.querySelectorAll(".tab").forEach((btn) => {
   btn.onclick = () => {
@@ -98,6 +99,8 @@ document.querySelectorAll(".tab").forEach((btn) => {
     for (const k in panels) panels[k].classList.toggle("hidden", k !== activeTab);
     if (activeTab === "playlist") loadPlaylist();
     if (activeTab === "files") browse(fbPath);
+    if (activeTab === "sources") loadSources();
+    if (activeTab === "clocks") loadClocks();
   };
 });
 
@@ -172,3 +175,42 @@ $("fb-up").onclick = () => {
 
 // refresh the playlist highlight when the track changes (status events)
 window.addEventListener("linamp-status", () => { if (activeTab === "playlist") loadPlaylist(); });
+
+// ---- sources + vban ----
+async function loadSources() {
+  let data;
+  try { data = await (await fetch("/api/sources" + tokenQS())).json(); } catch { return; }
+  const wrap = $("src-list");
+  wrap.innerHTML = "";
+  for (const label of data.sources || []) {
+    const b = document.createElement("button");
+    b.className = "src-btn" + (label === data.current ? " on" : "");
+    b.textContent = label;
+    b.onclick = () => call("/api/source?name=" + encodeURIComponent(label)).then(() => setTimeout(loadSources, 200));
+    wrap.appendChild(b);
+  }
+  const vb = $("vban-btn");
+  vb.textContent = "VBAN: " + (data.vban ? "ON" : "OFF");
+  vb.classList.toggle("on", !!data.vban);
+  vb.onclick = () => call("/api/vban?on=" + (data.vban ? 0 : 1)).then(() => setTimeout(loadSources, 200));
+}
+
+// ---- clocks ----
+let clocksLoaded = false;
+async function loadClocks() {
+  if (clocksLoaded) return;
+  let data;
+  try { data = await (await fetch("/api/clock/list" + tokenQS())).json(); } catch { return; }
+  const grid = $("clock-grid");
+  grid.innerHTML = "";
+  for (const face of data.faces || []) {
+    const cell = document.createElement("div");
+    cell.className = "clock-cell";
+    cell.textContent = face;
+    cell.onclick = () => call("/api/clock?face=" + encodeURIComponent(face));
+    grid.appendChild(cell);
+  }
+  clocksLoaded = true;
+}
+$("ss-on").onclick = () => call("/api/screensaver/on");
+$("ss-off").onclick = () => call("/api/screensaver/off");
