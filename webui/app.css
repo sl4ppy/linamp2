@@ -44,3 +44,26 @@ h1{ font-size:18px; letter-spacing:.12em; margin:.2em 0; }
 .val{ font-family:"DejaVu Sans Mono",monospace; font-size:13px; min-width:34px; text-align:right; }
 input[type=range]{ accent-color:var(--green); height:22px; }
 @media (max-width:380px){ .spectrum{ width:120px; } .tbtn{ font-size:18px; height:48px; } }
+.tabs{ display:flex; gap:6px; margin:10px 0 4px; }
+.tab{ flex:1; padding:9px; font-size:13px; color:var(--dim); background:var(--panel);
+  border:1px solid var(--line); border-radius:8px; cursor:pointer; }
+.tab.on{ color:var(--green); border-color:#1f4; }
+.panel.hidden{ display:none; }
+.pl-head,.fb-head{ display:flex; align-items:center; justify-content:space-between;
+  gap:10px; margin:10px 0; color:var(--dim); font-size:13px; }
+.fb-path{ font-family:"DejaVu Sans Mono",monospace; color:var(--green); overflow:hidden;
+  text-overflow:ellipsis; white-space:nowrap; }
+.minibtn{ padding:6px 10px; font-size:12px; color:var(--ink); background:var(--panel);
+  border:1px solid var(--line); border-radius:6px; cursor:pointer; }
+.pl-list,.fb-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; }
+.pl-list li,.fb-list li{ display:flex; align-items:center; gap:10px; padding:11px 12px;
+  background:var(--panel); border:1px solid var(--line); border-radius:8px; }
+.pl-list li.cur{ border-color:var(--green); }
+.pl-row{ flex:1; min-width:0; cursor:pointer; }
+.pl-row .t{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pl-row .a{ font-size:12px; color:var(--dim); }
+.pl-dur{ font-family:"DejaVu Sans Mono",monospace; font-size:12px; color:var(--dim); }
+.pl-x{ color:#c66; background:none; border:none; font-size:16px; cursor:pointer; }
+.fb-list li{ cursor:pointer; }
+.fb-ico{ width:18px; text-align:center; }
+.fb-list .add{ margin-left:auto; color:var(--accent); }

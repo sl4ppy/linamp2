@@ -19,6 +19,13 @@
 #include "ui_desktopbasewindow.h"
 #endif
 
+#include <QDir>
+#include <QFileInfo>
+#include <QUrl>
+#include <QSettings>
+#include <QJsonArray>
+#include <QJsonObject>
+#include "playlistmodel.h"
 #include <QLabel>
 #include <QVBoxLayout>
 #include <QMessageBox>
@@ -49,6 +56,10 @@ MainWindow::MainWindow(QWidget *parent)
     // Setup playlist
     m_playlistModel = new PlaylistModel(this);
     m_playlist = m_playlistModel->playlist();
+
+    m_musicRoot = QSettings().value("api/musicRoot", QDir::homePath() + "/Music").toString();
+    if (!QDir(m_musicRoot).exists())
+        m_musicRoot = QDir::homePath();
 
     // Setup views
     controlButtons = new ControlButtonsWidget(this);
@@ -434,4 +445,121 @@ bool MainWindow::apiShowClockFace(int index)
         return false;
     showClockScreensaver(index);
     return true;
+}
+
+static const QStringList kAudioExt = { "mp3","flac","wav","ogg","m4a","aac","opus" };
+
+int MainWindow::apiPlaylistCurrent() const
+{
+    return m_playlist ? m_playlist->currentIndex() : -1;
+}
+
+QJsonArray MainWindow::apiPlaylist() const
+{
+    QJsonArray arr;
+    if (!m_playlist || !m_playlistModel) return arr;
+    const int cur = m_playlist->currentIndex();
+    const int n = m_playlist->mediaCount();
+    for (int i = 0; i < n; ++i) {
+        QJsonObject o;
+        o["index"] = i;
+        QString title = m_playlistModel->data(m_playlistModel->index(i, PlaylistModel::Title)).toString();
+        const QUrl u = m_playlist->media(i);
+        if (title.isEmpty()) title = u.fileName();
+        o["title"]    = title;
+        o["artist"]   = m_playlistModel->data(m_playlistModel->index(i, PlaylistModel::Artist)).toString();
+        o["duration"] = m_playlistModel->data(m_playlistModel->index(i, PlaylistModel::Duration)).toString();
+        o["current"]  = (i == cur);
+        arr.append(o);
+    }
+    return arr;
+}
+
+bool MainWindow::apiPlaylistPlay(int index)
+{
+    if (!m_playlist || !m_playlistModel || index < 0 || index >= m_playlist->mediaCount())
+        return false;
+    fileSource->jump(m_playlistModel->index(index, 0));
+    return true;
+}
+
+bool MainWindow::apiPlaylistRemove(int index)
+{
+    if (!m_playlist || index < 0 || index >= m_playlist->mediaCount())
+        return false;
+    return m_playlist->removeMedia(index);
+}
+
+void MainWindow::apiPlaylistClear()
+{
+    if (m_playlist) m_playlist->clear();
+}
+
+bool MainWindow::resolveSandboxed(const QString &rel, QString &outAbs) const
+{
+    const QString rootCanon = QDir(m_musicRoot).canonicalPath();
+    if (rootCanon.isEmpty()) return false;
+    const QString candidate = QDir(rootCanon).filePath(rel.isEmpty() ? QStringLiteral(".") : rel);
+    const QString canon = QFileInfo(candidate).canonicalFilePath();
+    if (canon.isEmpty()) return false;                // does not exist
+    if (canon != rootCanon && !canon.startsWith(rootCanon + "/")) return false; // escaped root
+    outAbs = canon;
+    return true;
+}
+
+QJsonObject MainWindow::apiBrowse(const QString &rel) const
+{
+    QJsonObject res;
+    QString abs;
+    if (!resolveSandboxed(rel, abs)) { res["ok"] = false; res["error"] = "invalid path"; return res; }
+    QFileInfo fi(abs);
+    if (!fi.isDir()) { res["ok"] = false; res["error"] = "not a directory"; return res; }
+
+    const QString rootCanon = QDir(m_musicRoot).canonicalPath();
+    QString relPath = QDir(rootCanon).relativeFilePath(abs);
+    if (relPath == ".") relPath = "";
+
+    res["ok"] = true;
+    res["path"] = relPath;
+
+    QJsonArray entries;
+    QDir dir(abs);
+    const auto list = dir.entryInfoList(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot,
+                                        QDir::Name | QDir::DirsFirst);
+    for (const QFileInfo &e : list) {
+        const QString childRel = relPath.isEmpty() ? e.fileName() : relPath + "/" + e.fileName();
+        if (e.isDir()) {
+            QJsonObject o; o["name"] = e.fileName(); o["type"] = "dir"; o["path"] = childRel;
+            entries.append(o);
+        } else if (kAudioExt.contains(e.suffix().toLower())) {
+            QJsonObject o; o["name"] = e.fileName(); o["type"] = "file"; o["path"] = childRel;
+            o["size"] = static_cast<double>(e.size());
+            entries.append(o);
+        }
+    }
+    res["entries"] = entries;
+    return res;
+}
+
+QJsonObject MainWindow::apiAddPath(const QString &rel)
+{
+    QJsonObject res;
+    QString abs;
+    if (!resolveSandboxed(rel, abs)) { res["ok"] = false; res["error"] = "invalid path"; return res; }
+    QFileInfo fi(abs);
+    QList<QUrl> urls;
+    if (fi.isDir()) {
+        QDir dir(abs);
+        const auto files = dir.entryInfoList(QDir::Files, QDir::Name);
+        for (const QFileInfo &f : files)
+            if (kAudioExt.contains(f.suffix().toLower()))
+                urls << QUrl::fromLocalFile(f.absoluteFilePath());
+    } else if (kAudioExt.contains(fi.suffix().toLower())) {
+        urls << QUrl::fromLocalFile(abs);
+    }
+    if (urls.isEmpty()) { res["ok"] = false; res["error"] = "no audio files"; return res; }
+    fileSource->addToPlaylist(urls);
+    res["ok"] = true;
+    res["added"] = urls.size();
+    return res;
 }
