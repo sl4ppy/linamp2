@@ -22,7 +22,18 @@ public slots:
     void setVolume(int volume);
     void setBalance(int balance);
 
+    // Transport forwarding to the active source (used by the HTTP API)
+    void play();
+    void pause();
+    void stop();
+    void next();
+    void previous();
+    void seek(int ms);
+    void shuffle();
+    void repeat();
+
 private:
+    AudioSource *activeSource() const;
     QList<AudioSource*> sources;
     QList<QString> sourceLabels;
     int currentSource = -1;

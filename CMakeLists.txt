@@ -29,6 +29,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/view-avs/effects)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/vban)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/view-geiss)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/view-geiss/effects)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/api)
 
 qt_add_executable(player WIN32 MACOSX_BUNDLE
     src/audiosource-base/audiosource.cpp
@@ -134,6 +135,8 @@ qt_add_executable(player WIN32 MACOSX_BUNDLE
     src/view-avs/effects/avsclock.h
     src/vban/vbansender.cpp
     src/vban/vbansender.h
+    src/api/apiserver.cpp
+    src/api/apiserver.h
     src/view-geiss/geisswidget.cpp
     src/view-geiss/geisswidget.h
     src/view-geiss/audioanalyzer.cpp

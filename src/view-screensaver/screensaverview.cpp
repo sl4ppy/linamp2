@@ -116,15 +116,39 @@ ScreenSaverView::~ScreenSaverView()
 
 void ScreenSaverView::start()
 {
+    start(-1);
+}
+
+void ScreenSaverView::start(int themeIndex)
+{
     m_hue = QRandomGenerator::global()->bounded(360);
     m_posX = -1;
     m_posY = -1;
 
-    // Select random theme (includes digital as one option)
     auto themes = getAllClockThemes();
-    m_themeIndex = QRandomGenerator::global()->bounded(themes.size());
+    if (themeIndex < 0 || themeIndex >= themes.size())
+        themeIndex = QRandomGenerator::global()->bounded(themes.size());
+
+    m_themeIndex = themeIndex;
     m_currentTheme = themes[m_themeIndex];
     m_clockMode = m_currentTheme.isDigital ? Digital : Analog;
+}
+
+QStringList ScreenSaverView::faceNames()
+{
+    QStringList names;
+    for (const ClockTheme &t : getAllClockThemes())
+        names << QString::fromUtf8(t.name);
+    return names;
+}
+
+int ScreenSaverView::faceIndexForName(const QString &name)
+{
+    auto themes = getAllClockThemes();
+    for (int i = 0; i < themes.size(); ++i)
+        if (name.compare(QString::fromUtf8(themes[i].name), Qt::CaseInsensitive) == 0)
+            return i;
+    return -1;
 }
 
 void ScreenSaverView::formatTime()

@@ -11,6 +11,7 @@ Linamp is a retro Winamp-inspired music player for Linux/Raspberry Pi, built wit
 > - 🎆 **AVS** — Winamp AVS-style oscilloscope, starfield, water, mirror, and more
 > - 🕐 **Screensaver** — 15 themed clock faces (10 analog dials + 5 digital styles) after 5 min idle
 > - 🔍 **Scalable UI** — 1x through 4x DPI scaling with per-scale stylesheets
+> - 🔌 **HTTP API** — control transport, audio and the screensaver/clocks over the LAN with simple GET requests (see [docs/API.md](docs/API.md))
 
 ## The Hardware
 

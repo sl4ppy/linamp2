@@ -1,6 +1,7 @@
 #include <QFileDialog>
 
 #include "mainwindow.h"
+#include "apiserver.h"
 #include "desktopplayerwindow.h"
 #include "qstandardpaths.h"
 #include "ui_desktopplayerwindow.h"
@@ -206,6 +207,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Start the screensaver timer (idle from beginning)
     screenSaverTimer->start();
+
+    // HTTP control API (best-effort; never fatal)
+    apiServer = new ApiServer(coordinator, this, this);
 }
 
 MainWindow::~MainWindow()
@@ -384,4 +388,35 @@ void MainWindow::resetScreenSaverTimer()
     // and Geiss visualizer (music playing). activateScreenSaver() decides which.
     screenSaverTimer->stop();
     screenSaverTimer->start();
+}
+
+void MainWindow::showClockScreensaver(int themeIndex)
+{
+    // Force the clock screensaver regardless of playback/Geiss state.
+    geissActive = false;
+    screenSaverActive = true;
+    screenSaver->start(themeIndex);
+    viewStack->setCurrentIndex(3); // ScreenSaverView
+    // Keep the idle timer running so normal idle behavior resumes after the
+    // timeout: an API-selected face is shown now but is not pinned forever —
+    // if music is playing it will yield to Geiss at the next idle activation.
+    resetScreenSaverTimer();
+}
+
+void MainWindow::apiTriggerScreensaver()
+{
+    showClockScreensaver(-1); // random face
+}
+
+void MainWindow::apiDismissScreensaver()
+{
+    deactivateScreenSaver();
+}
+
+bool MainWindow::apiShowClockFace(int index)
+{
+    if (index < 0 || index >= ScreenSaverView::faceNames().size())
+        return false;
+    showClockScreensaver(index);
+    return true;
 }

@@ -25,12 +25,20 @@
 // Screensaver timeout in milliseconds (5 minutes default)
 #define SCREENSAVER_TIMEOUT_MS (5 * 60 * 1000)
 
+class ApiServer;
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+
+    // HTTP API hooks (called on the GUI thread by ApiServer)
+    void apiTriggerScreensaver();
+    void apiDismissScreensaver();
+    bool apiShowClockFace(int index); // false if index out of range
+    MediaPlayer::PlaybackState playbackState() const { return currentPlaybackState; }
 
     QStackedLayout *viewStack;
 
@@ -63,6 +71,7 @@ private slots:
     void resetScreenSaverTimer();
 
 private:
+    void showClockScreensaver(int themeIndex); // themeIndex < 0 = random
     QMediaPlaylist *m_playlist = nullptr;
     PlaylistModel *m_playlistModel = nullptr;
     QProcess *shutdownProcess = nullptr;
@@ -76,6 +85,7 @@ private:
     bool screenSaverActive = false;
     bool geissActive = false;
     MediaPlayer::PlaybackState currentPlaybackState = MediaPlayer::StoppedState;
+    ApiServer *apiServer = nullptr;
 
 };
 
