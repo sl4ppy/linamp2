@@ -13,6 +13,12 @@
       <div id="conn" class="conn off">connecting…</div>
     </header>
 
+    <nav class="tabs">
+      <button class="tab on" data-tab="player">Player</button>
+      <button class="tab" data-tab="playlist">Playlist</button>
+      <button class="tab" data-tab="files">Files</button>
+    </nav>
+    <div id="tab-player" class="panel">
     <section class="screen">
       <canvas id="spectrum" class="spectrum" width="234" height="80"></canvas>
       <div class="screen-info">
@@ -53,6 +59,17 @@
       <div class="row"><span class="lbl">src</span><span id="source" class="val">—</span>
         <span class="lbl">state</span><span id="state" class="val">stopped</span></div>
     </section>
+    </div>
+    <div id="tab-playlist" class="panel hidden">
+      <div class="pl-head"><span id="pl-count">0 tracks</span>
+        <button id="pl-clear" class="minibtn">Clear</button></div>
+      <ul id="pl-list" class="pl-list"></ul>
+    </div>
+    <div id="tab-files" class="panel hidden">
+      <div class="fb-head"><button id="fb-up" class="minibtn">⬆ Up</button>
+        <span id="fb-path" class="fb-path">/</span></div>
+      <ul id="fb-list" class="fb-list"></ul>
+    </div>
   </main>
   <script type="module" src="/app.js"></script>
 </body>

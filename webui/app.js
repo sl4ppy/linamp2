@@ -57,6 +57,7 @@ function applyStatus(s) {
   }
   $("source").textContent = s.source || "—";
   $("state").textContent = s.state || "stopped";
+  window.dispatchEvent(new CustomEvent("linamp-status"));
 }
 function applyPosition(ms) {
   if (seeking) return;
@@ -107,3 +108,88 @@ function connect() {
   es.addEventListener("spectrum", (e) => { bars = JSON.parse(e.data); });
 }
 connect();
+
+// ---- tabs ----
+const panels = { player: $("tab-player"), playlist: $("tab-playlist"), files: $("tab-files") };
+let activeTab = "player";
+document.querySelectorAll(".tab").forEach((btn) => {
+  btn.onclick = () => {
+    activeTab = btn.dataset.tab;
+    document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("on", b === btn));
+    for (const k in panels) panels[k].classList.toggle("hidden", k !== activeTab);
+    if (activeTab === "playlist") loadPlaylist();
+    if (activeTab === "files") browse(fbPath);
+  };
+});
+
+// ---- playlist ----
+async function loadPlaylist() {
+  let data;
+  try { data = await (await fetch("/api/playlist" + tokenQS())).json(); } catch { return; }
+  const items = data.items || [];
+  $("pl-count").textContent = items.length + (items.length === 1 ? " track" : " tracks");
+  const ul = $("pl-list");
+  ul.innerHTML = "";
+  for (const it of items) {
+    const li = document.createElement("li");
+    if (it.current) li.classList.add("cur");
+    const row = document.createElement("div");
+    row.className = "pl-row";
+    const t = document.createElement("div"); t.className = "t"; t.textContent = it.title || "—";
+    const a = document.createElement("div"); a.className = "a"; a.textContent = it.artist || "";
+    row.append(t, a);
+    row.onclick = () => call("/api/playlist/play?index=" + it.index).then(() => setTimeout(loadPlaylist, 250));
+    const dur = document.createElement("span"); dur.className = "pl-dur"; dur.textContent = it.duration || "";
+    const x = document.createElement("button"); x.className = "pl-x"; x.textContent = "✕";
+    x.onclick = (e) => { e.stopPropagation();
+      call("/api/playlist/remove?index=" + it.index).then(() => setTimeout(loadPlaylist, 150)); };
+    li.append(row, dur, x);
+    ul.appendChild(li);
+  }
+}
+$("pl-clear").onclick = () => call("/api/playlist/clear").then(() => setTimeout(loadPlaylist, 150));
+
+// ---- file browser ----
+let fbPath = "";
+function tokenQS() {
+  const t = new URLSearchParams(location.search).get("token") || localStorage.getItem("linamp_token") || "";
+  return t ? "?token=" + encodeURIComponent(t) : "";
+}
+async function browse(path) {
+  let data;
+  try {
+    const q = "/api/browse?path=" + encodeURIComponent(path);
+    const t = new URLSearchParams(location.search).get("token") || localStorage.getItem("linamp_token") || "";
+    data = await (await fetch(q + (t ? "&token=" + encodeURIComponent(t) : "")).then((r) => r)).json();
+  } catch { return; }
+  if (!data.ok) return;
+  fbPath = data.path || "";
+  $("fb-path").textContent = "/" + fbPath;
+  const ul = $("fb-list");
+  ul.innerHTML = "";
+  for (const e of data.entries || []) {
+    const li = document.createElement("li");
+    const ico = document.createElement("span"); ico.className = "fb-ico";
+    ico.textContent = e.type === "dir" ? "📁" : "🎵";
+    const name = document.createElement("span"); name.textContent = e.name;
+    name.style.cssText = "flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
+    li.append(ico, name);
+    if (e.type === "dir") {
+      li.onclick = () => browse(e.path);
+    } else {
+      const add = document.createElement("span"); add.className = "add"; add.textContent = "+ add";
+      add.onclick = (ev) => { ev.stopPropagation();
+        call("/api/add?path=" + encodeURIComponent(e.path)).then(() => { add.textContent = "added"; }); };
+      li.appendChild(add);
+    }
+    ul.appendChild(li);
+  }
+}
+$("fb-up").onclick = () => {
+  if (!fbPath) return;
+  const parent = fbPath.includes("/") ? fbPath.slice(0, fbPath.lastIndexOf("/")) : "";
+  browse(parent);
+};
+
+// refresh the playlist highlight when the track changes (status events)
+window.addEventListener("linamp-status", () => { if (activeTab === "playlist") loadPlaylist(); });
