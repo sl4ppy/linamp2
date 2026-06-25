@@ -13,6 +13,7 @@
 #include "audiosourcecoordinator.h"
 #include "mainwindow.h"
 #include "screensaverview.h"
+#include "mediaplayer.h"
 
 // --- small helpers ---
 
@@ -225,9 +226,56 @@ bool ApiServer::handleMeta(const QString &path, const HttpRequest &req, Response
     return false;
 }
 
-// Stubs filled in by later tasks.
-bool ApiServer::handleTransport(const QString &, const HttpRequest &, Response &)
+bool ApiServer::handleTransport(const QString &path, const HttpRequest &req, Response &out)
 {
+    if (path == "/api/play")    { m_coordinator->play();    out = {200, okJson()}; return true; }
+    if (path == "/api/pause")   { m_coordinator->pause();   out = {200, okJson()}; return true; }
+    if (path == "/api/stop")    { m_coordinator->stop();    out = {200, okJson()}; return true; }
+    if (path == "/api/next")    { m_coordinator->next();    out = {200, okJson()}; return true; }
+    if (path == "/api/previous" || path == "/api/prev") {
+        m_coordinator->previous(); out = {200, okJson()}; return true;
+    }
+    if (path == "/api/shuffle") { m_coordinator->shuffle(); out = {200, okJson()}; return true; }
+    if (path == "/api/repeat")  { m_coordinator->repeat();  out = {200, okJson()}; return true; }
+
+    if (path == "/api/playpause") {
+        if (m_window->playbackState() == MediaPlayer::PlayingState)
+            m_coordinator->pause();
+        else
+            m_coordinator->play();
+        out = {200, okJson()};
+        return true;
+    }
+    if (path == "/api/seek") {
+        int ms;
+        if (!parseIntParam(req.query.value("ms"), ms) || ms < 0) {
+            out = {400, errJson("seek requires ms>=0")};
+            return true;
+        }
+        m_coordinator->seek(ms);
+        out = {200, okJson()};
+        return true;
+    }
+    if (path == "/api/volume") {
+        int level;
+        if (!parseIntParam(req.query.value("level"), level) || level < 0 || level > 100) {
+            out = {400, errJson("volume level must be 0..100")};
+            return true;
+        }
+        m_coordinator->setVolume(level);
+        out = {200, okJson()};
+        return true;
+    }
+    if (path == "/api/balance") {
+        int value;
+        if (!parseIntParam(req.query.value("value"), value) || value < -100 || value > 100) {
+            out = {400, errJson("balance value must be -100..100")};
+            return true;
+        }
+        m_coordinator->setBalance(value);
+        out = {200, okJson()};
+        return true;
+    }
     return false;
 }
 
