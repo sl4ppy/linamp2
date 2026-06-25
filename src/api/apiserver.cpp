@@ -267,6 +267,7 @@ bool ApiServer::handleStatic(const QString &path, Response &out)
         { "/index.html", ":/webui/index.html", "text/html; charset=utf-8" },
         { "/app.css",    ":/webui/app.css",    "text/css; charset=utf-8" },
         { "/app.js",     ":/webui/app.js",     "application/javascript; charset=utf-8" },
+        { "/api.js",     ":/webui/api.js",     "application/javascript; charset=utf-8" },
     };
     for (const Asset &a : assets) {
         if (path == a.route) {

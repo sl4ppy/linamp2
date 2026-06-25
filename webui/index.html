@@ -2,28 +2,58 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Linamp Remote</title>
 <link rel="stylesheet" href="/app.css">
 </head>
 <body>
   <main class="wrap">
-    <header><h1>LINAMP <span class="dim">REMOTE</span></h1><div id="conn" class="conn off">connecting…</div></header>
-    <section class="lcd">
-      <div id="track" class="track">—</div>
-      <div class="meta">
-        <span id="bitrate">— kbps</span> · <span id="srate">— kHz</span> · <span id="chan">—</span>
+    <header>
+      <h1>LINAMP <span class="dim">REMOTE</span></h1>
+      <div id="conn" class="conn off">connecting…</div>
+    </header>
+
+    <section class="screen">
+      <canvas id="spectrum" class="spectrum" width="234" height="80"></canvas>
+      <div class="screen-info">
+        <div id="track" class="track">—</div>
+        <div class="meta">
+          <span id="bitrate">—</span> kbps · <span id="srate">—</span> kHz ·
+          <span id="chan">—</span>
+        </div>
+        <div class="flags">
+          <span id="f-eq" class="flag">EQ</span>
+          <span id="f-pl" class="flag">PL</span>
+          <span id="f-shuffle" class="flag">SHUF</span>
+          <span id="f-repeat" class="flag">REP</span>
+        </div>
       </div>
-      <div class="time"><span id="pos">0:00</span> / <span id="dur">0:00</span></div>
-      <div id="state" class="state">stopped</div>
     </section>
+
+    <section class="seek">
+      <input id="seek" type="range" min="0" max="1000" value="0">
+      <div class="time"><span id="pos">0:00</span><span id="dur">0:00</span></div>
+    </section>
+
+    <section class="transport">
+      <button id="prev"  class="tbtn" title="Previous">⏮</button>
+      <button id="play"  class="tbtn" title="Play">⏵</button>
+      <button id="pause" class="tbtn" title="Pause">⏸</button>
+      <button id="stop"  class="tbtn" title="Stop">⏹</button>
+      <button id="next"  class="tbtn" title="Next">⏭</button>
+      <button id="shuffle" class="tbtn tog" title="Shuffle">🔀</button>
+      <button id="repeat"  class="tbtn tog" title="Repeat">🔁</button>
+    </section>
+
     <section class="rows">
-      <div class="row"><span class="lbl">vol</span><progress id="vol" max="100" value="0"></progress><span id="volv">0</span></div>
-      <div class="row"><span class="lbl">bal</span><span id="balv">center</span></div>
-      <div class="row"><span class="lbl">source</span><span id="source">—</span></div>
+      <div class="row"><span class="lbl">vol</span>
+        <input id="vol" type="range" min="0" max="100" value="0"><span id="volv" class="val">0</span></div>
+      <div class="row"><span class="lbl">bal</span>
+        <input id="bal" type="range" min="-100" max="100" value="0"><span id="balv" class="val">C</span></div>
+      <div class="row"><span class="lbl">src</span><span id="source" class="val">—</span>
+        <span class="lbl">state</span><span id="state" class="val">stopped</span></div>
     </section>
-    <p class="note">Phase 1 — read-only live status. Controls arrive in Phase 2.</p>
   </main>
-  <script src="/app.js"></script>
+  <script type="module" src="/app.js"></script>
 </body>
 </html>
