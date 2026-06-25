@@ -318,9 +318,9 @@ void ScreenSaverView::drawDialBackground(QPainter &p, float cx, float cy, float 
         QColor mid  = theme.colors.dial;
         QColor edge = theme.colors.dialEdge.isValid() ? theme.colors.dialEdge : mid.darker(160);
         QRadialGradient grad(QPointF(cx, cy - radius * 0.15f), radius);
-        grad.setColorStop(0.0, mid.lighter(135));
-        grad.setColorStop(0.6, mid);
-        grad.setColorStop(1.0, edge);
+        grad.setColorAt(0.0, mid.lighter(135));
+        grad.setColorAt(0.6, mid);
+        grad.setColorAt(1.0, edge);
         p.setPen(Qt::NoPen);
         p.setBrush(grad);
         p.drawEllipse(QPointF(cx, cy), radius, radius);
@@ -1035,10 +1035,10 @@ void ScreenSaverView::paintDigitalSplitFlap(QPainter &painter)
     auto drawTile = [&](float x, const QString &txt, const QString &lbl) {
         QRectF tile(x, y0, tileW, tileH);
         QLinearGradient g(x, y0, x, y0 + tileH);
-        g.setColorStop(0.0,  QColor(52, 52, 60));
-        g.setColorStop(0.49, QColor(38, 38, 44));
-        g.setColorStop(0.51, QColor(25, 25, 32));
-        g.setColorStop(1.0,  QColor(32, 32, 40));
+        g.setColorAt(0.0,  QColor(52, 52, 60));
+        g.setColorAt(0.49, QColor(38, 38, 44));
+        g.setColorAt(0.51, QColor(25, 25, 32));
+        g.setColorAt(1.0,  QColor(32, 32, 40));
         painter.setPen(QPen(QColor(0, 0, 0), 1.0f * UI_SCALE));
         painter.setBrush(g);
         painter.drawRoundedRect(tile, 10 * UI_SCALE, 10 * UI_SCALE);
@@ -1127,9 +1127,9 @@ void ScreenSaverView::paintDigitalNixie(QPainter &painter)
         QRectF tube(x, y, tubeW, tubeH);
         // glass envelope
         QLinearGradient gg(x, y, x, y + tubeH);
-        gg.setColorStop(0.0, QColor(60, 55, 48, 140));
-        gg.setColorStop(0.5, QColor(30, 28, 26, 90));
-        gg.setColorStop(1.0, QColor(50, 46, 40, 140));
+        gg.setColorAt(0.0, QColor(60, 55, 48, 140));
+        gg.setColorAt(0.5, QColor(30, 28, 26, 90));
+        gg.setColorAt(1.0, QColor(50, 46, 40, 140));
         painter.setPen(QPen(QColor(120, 110, 95, 130), 1.0f * UI_SCALE));
         painter.setBrush(gg);
         painter.drawRoundedRect(tube, tubeW * 0.45f, tubeW * 0.45f);
