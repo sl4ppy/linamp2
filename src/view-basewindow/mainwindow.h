@@ -26,6 +26,7 @@
 #define SCREENSAVER_TIMEOUT_MS (5 * 60 * 1000)
 
 class ApiServer;
+class WebStateHub;
 
 class MainWindow : public QMainWindow
 {
@@ -86,6 +87,7 @@ private:
     bool geissActive = false;
     MediaPlayer::PlaybackState currentPlaybackState = MediaPlayer::StoppedState;
     ApiServer *apiServer = nullptr;
+    WebStateHub *webState = nullptr;
 
 };
 

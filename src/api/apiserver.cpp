@@ -12,6 +12,7 @@
 
 #include "audiosourcecoordinator.h"
 #include "mainwindow.h"
+#include "webstatehub.h"
 #include "screensaverview.h"
 #include "mediaplayer.h"
 
@@ -108,8 +109,9 @@ HttpRequest parseRequest(const QByteArray &raw)
 
 // --- ApiServer ---
 
-ApiServer::ApiServer(AudioSourceCoordinator *coordinator, MainWindow *window, QObject *parent)
-    : QObject(parent), m_coordinator(coordinator), m_window(window)
+ApiServer::ApiServer(AudioSourceCoordinator *coordinator, MainWindow *window,
+                     WebStateHub *webState, QObject *parent)
+    : QObject(parent), m_coordinator(coordinator), m_window(window), m_webState(webState)
 {
     QSettings settings;
     m_enabled     = settings.value("api/enabled", true).toBool();
@@ -220,6 +222,10 @@ bool ApiServer::handleMeta(const QString &path, const HttpRequest &req, Response
     Q_UNUSED(req);
     if (path == "/" || path == "/api/health") {
         out = {200, QByteArrayLiteral("{\"ok\":true,\"service\":\"linamp\"}")};
+        return true;
+    }
+    if (path == "/api/status") {
+        out = {200, QJsonDocument(m_webState->snapshot()).toJson(QJsonDocument::Compact)};
         return true;
     }
     if (path == "/api/clock/list") {

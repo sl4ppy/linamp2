@@ -8,6 +8,7 @@
 
 class AudioSourceCoordinator;
 class MainWindow;
+class WebStateHub;
 class QTcpServer;
 class QTcpSocket;
 
@@ -29,6 +30,7 @@ class ApiServer : public QObject
 public:
     explicit ApiServer(AudioSourceCoordinator *coordinator,
                        MainWindow *window,
+                       WebStateHub *webState,
                        QObject *parent = nullptr);
 
 private slots:
@@ -51,6 +53,7 @@ private:
     QTcpServer *m_server = nullptr;
     AudioSourceCoordinator *m_coordinator = nullptr;
     MainWindow *m_window = nullptr;
+    WebStateHub *m_webState = nullptr;
     QHash<QTcpSocket *, QByteArray> m_buffers;
 
     bool m_enabled = true;
