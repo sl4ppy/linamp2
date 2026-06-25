@@ -176,7 +176,7 @@ void ApiServer::onReadyRead()
     HttpRequest req = parseRequest(buf);
     m_buffers.remove(socket);
 
-    if (req.valid && authorized(req) && req.path == "/api/events") {
+    if (req.valid && authorized(req) && req.method == "GET" && req.path == "/api/events") {
         if (!m_sseBroker || m_sseBroker->clientCount() >= m_maxSseClients) {
             sendResponse(socket, {503, errJson("too many SSE clients")});
             socket->disconnectFromHost();
@@ -245,6 +245,7 @@ bool ApiServer::handleMeta(const QString &path, const HttpRequest &req, Response
         return true;
     }
     if (path == "/api/status") {
+        if (!m_webState) { out = {503, errJson("state unavailable")}; return true; }
         out = {200, QJsonDocument(m_webState->snapshot()).toJson(QJsonDocument::Compact)};
         return true;
     }

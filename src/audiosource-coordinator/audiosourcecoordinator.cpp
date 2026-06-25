@@ -94,12 +94,14 @@ void AudioSourceCoordinator::setSource(int newSource)
 void AudioSourceCoordinator::setVolume(int volume)
 {
     system_audio->setVolume(volume);
+    emit volumeChanged(volume);
     view->setMessage(QString("VOLUME: %1%").arg(volume), 500);
 }
 
 void AudioSourceCoordinator::setBalance(int balance)
 {
     system_audio->setBalance(balance);
+    emit balanceChanged(balance);
     QString message;
     if(balance == 0) {
         message = "BALANCE: CENTER";
