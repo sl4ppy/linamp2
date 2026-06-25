@@ -385,3 +385,31 @@ void MainWindow::resetScreenSaverTimer()
     screenSaverTimer->stop();
     screenSaverTimer->start();
 }
+
+void MainWindow::showClockScreensaver(int themeIndex)
+{
+    // Force the clock screensaver regardless of playback/Geiss state.
+    geissActive = false;
+    screenSaverActive = true;
+    screenSaver->start(themeIndex);
+    viewStack->setCurrentIndex(3); // ScreenSaverView
+    resetScreenSaverTimer();
+}
+
+void MainWindow::apiTriggerScreensaver()
+{
+    showClockScreensaver(-1); // random face
+}
+
+void MainWindow::apiDismissScreensaver()
+{
+    deactivateScreenSaver();
+}
+
+bool MainWindow::apiShowClockFace(int index)
+{
+    if (index < 0 || index >= ScreenSaverView::faceNames().size())
+        return false;
+    showClockScreensaver(index);
+    return true;
+}

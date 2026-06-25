@@ -32,6 +32,12 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+    // HTTP API hooks (called on the GUI thread by ApiServer)
+    void apiTriggerScreensaver();
+    void apiDismissScreensaver();
+    bool apiShowClockFace(int index); // false if index out of range
+    MediaPlayer::PlaybackState playbackState() const { return currentPlaybackState; }
+
     QStackedLayout *viewStack;
 
     PlayerView *player;
@@ -63,6 +69,7 @@ private slots:
     void resetScreenSaverTimer();
 
 private:
+    void showClockScreensaver(int themeIndex); // themeIndex < 0 = random
     QMediaPlaylist *m_playlist = nullptr;
     PlaylistModel *m_playlistModel = nullptr;
     QProcess *shutdownProcess = nullptr;
