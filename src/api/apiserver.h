@@ -49,6 +49,7 @@ private:
     Response route(const HttpRequest &req);
     bool handleMeta(const QString &path, const HttpRequest &req, Response &out);
     bool handleStatic(const QString &path, Response &out);
+    bool handlePlaylist(const QString &path, const HttpRequest &req, Response &out);
     bool handleTransport(const QString &path, const HttpRequest &req, Response &out);   // Task 5
     bool handleScreensaver(const QString &path, const HttpRequest &req, Response &out); // Task 6
     bool authorized(const HttpRequest &req) const;

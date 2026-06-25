@@ -5,6 +5,8 @@
 #include <QStackedLayout>
 #include <QProcess>
 #include <QTimer>
+#include <QJsonArray>
+#include <QJsonObject>
 #include "audiosourcecd.h"
 #include "audiosourcecoordinator.h"
 #include "audiosourcefile.h"
@@ -42,6 +44,15 @@ public:
     bool apiShowClockFace(int index); // false if index out of range
     MediaPlayer::PlaybackState playbackState() const { return currentPlaybackState; }
 
+    // Web API: playlist + file browser
+    QJsonArray apiPlaylist() const;
+    int  apiPlaylistCurrent() const;
+    bool apiPlaylistPlay(int index);
+    bool apiPlaylistRemove(int index);
+    void apiPlaylistClear();
+    QJsonObject apiBrowse(const QString &rel) const;
+    QJsonObject apiAddPath(const QString &rel);
+
     QStackedLayout *viewStack;
 
     PlayerView *player;
@@ -76,6 +87,8 @@ private:
     void showClockScreensaver(int themeIndex); // themeIndex < 0 = random
     QMediaPlaylist *m_playlist = nullptr;
     PlaylistModel *m_playlistModel = nullptr;
+    QString m_musicRoot;
+    bool resolveSandboxed(const QString &rel, QString &outAbs) const;
     QProcess *shutdownProcess = nullptr;
     void shutdown();
 

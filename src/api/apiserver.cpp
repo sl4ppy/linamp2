@@ -232,6 +232,7 @@ ApiServer::Response ApiServer::route(const HttpRequest &req)
     Response out;
     if (handleMeta(path, req, out))        return out;
     if (handleStatic(path, out))           return out;
+    if (handlePlaylist(path, req, out))    return out;
     if (handleTransport(path, req, out))   return out;
     if (handleScreensaver(path, req, out)) return out;
     return {404, errJson("unknown endpoint")};
@@ -370,6 +371,46 @@ bool ApiServer::handleScreensaver(const QString &path, const HttpRequest &req, R
             return true;
         }
         out = {200, okJson()};
+        return true;
+    }
+    return false;
+}
+
+bool ApiServer::handlePlaylist(const QString &path, const HttpRequest &req, Response &out)
+{
+    if (path == "/api/playlist") {
+        QJsonObject o;
+        o["ok"] = true;
+        o["current"] = m_window->apiPlaylistCurrent();
+        o["items"] = m_window->apiPlaylist();
+        out = {200, QJsonDocument(o).toJson(QJsonDocument::Compact)};
+        return true;
+    }
+    if (path == "/api/playlist/play") {
+        int index;
+        if (!parseIntParam(req.query.value("index"), index)) { out = {400, errJson("index required")}; return true; }
+        out = m_window->apiPlaylistPlay(index) ? Response{200, okJson()} : Response{400, errJson("bad index")};
+        return true;
+    }
+    if (path == "/api/playlist/remove") {
+        int index;
+        if (!parseIntParam(req.query.value("index"), index)) { out = {400, errJson("index required")}; return true; }
+        out = m_window->apiPlaylistRemove(index) ? Response{200, okJson()} : Response{400, errJson("bad index")};
+        return true;
+    }
+    if (path == "/api/playlist/clear") {
+        m_window->apiPlaylistClear();
+        out = {200, okJson()};
+        return true;
+    }
+    if (path == "/api/browse") {
+        QJsonObject o = m_window->apiBrowse(req.query.value("path"));
+        out = {o.value("ok").toBool() ? 200 : 400, QJsonDocument(o).toJson(QJsonDocument::Compact)};
+        return true;
+    }
+    if (path == "/api/add") {
+        QJsonObject o = m_window->apiAddPath(req.query.value("path"));
+        out = {o.value("ok").toBool() ? 200 : 400, QJsonDocument(o).toJson(QJsonDocument::Compact)};
         return true;
     }
     return false;
