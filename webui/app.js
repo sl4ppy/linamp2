@@ -198,6 +198,8 @@ async function loadSources() {
 // ---- clocks ----
 let clocksLoaded = false;
 async function loadClocks() {
+  $("ss-on").onclick = () => call("/api/screensaver/on");
+  $("ss-off").onclick = () => call("/api/screensaver/off");
   if (clocksLoaded) return;
   let data;
   try { data = await (await fetch("/api/clock/list" + tokenQS())).json(); } catch { return; }
@@ -212,5 +214,3 @@ async function loadClocks() {
   }
   clocksLoaded = true;
 }
-$("ss-on").onclick = () => call("/api/screensaver/on");
-$("ss-off").onclick = () => call("/api/screensaver/off");
