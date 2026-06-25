@@ -41,7 +41,7 @@ Digital faces all bounce off the screen edges like a DVD screensaver. The style 
 |-------|------|
 | **Neon** | Floating time (12-hour, blinking colon), AM/PM and date with a 3-layer neon glow and rainbow hue cycling |
 | **Seven Segment** | Cyan lit segments over dim ghost segments with soft bloom, glowing colon, AM/PM + seconds label |
-| **Split Flap** | Charcoal Solari flip tiles with a center seam, axle notches and condensed white numerals (HOURS / MINUTES) |
+| **Split Flap** | Charcoal Solari flip tiles with a center seam, axle notches and condensed white numerals (HOURS / MINUTES / SECONDS) |
 | **Nixie** | Four glass tubes with warm orange glow cathodes, faint caged "8" ghost digits, end caps and neon colon dots |
 | **Terminal** | Phosphor-green CRT console panel — prompt, large time, date and a blinking cursor block over scanlines |
 

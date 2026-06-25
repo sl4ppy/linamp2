@@ -13,3 +13,5 @@ Documentation for the Linamp retro music player. These docs cover the internal a
 | [ui-system.md](ui-system.md) | UI and view system: window hierarchy, all views, scaling system, custom widgets, ALSA audio control, Qt resources |
 | [build-and-deploy.md](build-and-deploy.md) | Development setup, CMake configuration, Debian packaging, CI/CD pipeline, shell scripts |
 | [SCREENSAVER.md](SCREENSAVER.md) | Screensaver feature: idle detection, clock rendering, configuration, customization |
+| [API.md](API.md) | HTTP control API: endpoints (transport, audio, playlist, file browser, sources/VBAN, screensaver/clocks, status, SSE), config, auth |
+| [WEBUI.md](WEBUI.md) | Web remote interface: tabs, architecture (WebStateHub/SseBroker), live updates over SSE, configuration, security |

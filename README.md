@@ -12,6 +12,7 @@ Linamp is a retro Winamp-inspired music player for Linux/Raspberry Pi, built wit
 > - 🕐 **Screensaver** — 15 themed clock faces (10 analog dials + 5 digital styles) after 5 min idle
 > - 🔍 **Scalable UI** — 1x through 4x DPI scaling with per-scale stylesheets
 > - 🔌 **HTTP API** — control transport, audio and the screensaver/clocks over the LAN with simple GET requests (see [docs/API.md](docs/API.md))
+> - 🌐 **Web Remote** — a full responsive web interface served by the device itself: now-playing, transport, playlist + sandboxed file browser, source switching, and a clock-face picker with live thumbnails (see [docs/WEBUI.md](docs/WEBUI.md))
 
 ## The Hardware
 
@@ -21,9 +22,25 @@ A physical Linamp2 unit I built — a custom enclosure with a wide touchscreen r
 
 ![The Linamp2 unit in action](screenshots/linamp2.gif)
 
+## Web Remote
+
+The device serves its own responsive web interface (default `http://<linamp-ip>:8080/`) — control everything from a phone or desktop browser over the LAN, with live status pushed via Server-Sent Events. Five tabs: **Player**, **Playlist**, **Files** (a sandboxed browser of the device's music folder), **Sources**, and **Clocks** (a screensaver-face picker with client-rendered thumbnails of all 15 faces). No app to install, no build toolchain — the page is embedded in the player binary. See [docs/WEBUI.md](docs/WEBUI.md).
+
+| | |
+|---|---|
+| ![Web remote — player](screenshots/web-remote-player.png) | ![Web remote — clock picker](screenshots/web-remote-clocks.png) |
+| Player tab: now-playing, transport, seek, sliders | Clocks tab: pick a screensaver face from a live-thumbnail gallery |
+
 ## Screenshots
 
 ![Player view with active playback](screenshots/player-playing.png)
+
+A few of the digital screensaver clock faces (shown on the device's 1280×400 display):
+
+| | |
+|---|---|
+| ![Split-flap clock](screenshots/clock-splitflap.png) | ![Terminal clock](screenshots/clock-terminal.png) |
+| Split-flap (Solari) with hours/minutes/seconds | Terminal / CRT |
 
 ## Features
 
@@ -32,6 +49,8 @@ A physical Linamp2 unit I built — a custom enclosure with a wide touchscreen r
 - **Bluetooth receiver** — Act as a Bluetooth audio sink for phones/tablets
 - **Spotify Connect** — Appear as a Spotify Connect device on the local network
 - **VBAN network streaming** — Send audio output over the network via VBAN protocol to Voicemeeter Banana or other VBAN-compatible receivers
+- **HTTP control API** — LAN-reachable, browser-clickable GET endpoints for transport, audio, source switching, playlist/file-browser, screensaver and clock-face selection (see [docs/API.md](docs/API.md))
+- **Web remote interface** — responsive web app served from the device (Player / Playlist / Files / Sources / Clocks tabs) with live status over Server-Sent Events; embedded in the binary, no install (see [docs/WEBUI.md](docs/WEBUI.md))
 - **Spectrum visualizer** — Real-time FFT-based visualization captured from PipeWire system audio output
 - **Geiss visualizer** — Dreamlike audio-reactive warp visuals inspired by the legendary 1998 Winamp plugin, with beat-synced transitions, chromatic dispersion, and 15 warp modes
 - **AVS visualizer** — Winamp AVS-style visualization with oscilloscope, starfield, water, mirror, and more
