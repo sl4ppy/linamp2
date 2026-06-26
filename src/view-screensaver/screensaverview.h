@@ -103,6 +103,7 @@ private:
     int m_cachedGlowSize = 0;
 
     // Floating position (shared between digital and analog modes)
+    bool  m_posInit = false;   // false until the block is first centered (per activation)
     float m_posX = -1;
     float m_posY = -1;
     float m_velX = 0.45f;

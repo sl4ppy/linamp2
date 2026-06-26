@@ -123,6 +123,7 @@ void ScreenSaverView::start()
 void ScreenSaverView::start(int themeIndex)
 {
     m_hue = QRandomGenerator::global()->bounded(360);
+    m_posInit = false;
     m_posX = -1;
     m_posY = -1;
 
@@ -198,10 +199,13 @@ void ScreenSaverView::paintEvent(QPaintEvent *)
 
 QPointF ScreenSaverView::placeFloatingBlock(float totalW, float totalH)
 {
-    // Center on first paint
-    if (m_posX < 0) {
+    // Center on first paint (use a dedicated flag, not the sign of m_posX —
+    // normal leftward/upward drift can step m_posX slightly negative, which
+    // must bounce, not re-center).
+    if (!m_posInit) {
         m_posX = (width()  - totalW) * 0.5f;
         m_posY = (height() - totalH) * 0.5f;
+        m_posInit = true;
     }
     // Bounce off edges
     if (m_posX <= 0)                      { m_posX = 0;                m_velX = fabsf(m_velX);  }
@@ -261,9 +265,10 @@ void ScreenSaverView::paintDigitalNeon(QPainter &painter)
     int totalH = blockH + pad * 2;
 
     // Initialize position to center on first paint
-    if (m_posX < 0) {
+    if (!m_posInit) {
         m_posX = (width() - totalW) * 0.35f;
         m_posY = (height() - totalH) * 0.4f;
+        m_posInit = true;
     }
 
     // Bounce off edges
@@ -742,9 +747,10 @@ void ScreenSaverView::paintAnalogClock(QPainter &painter)
     float dialSize = radius * 2.0f + 8.0f * UI_SCALE; // bounding box with margin
 
     // Initialize position to center on first paint
-    if (m_posX < 0) {
+    if (!m_posInit) {
         m_posX = (W - dialSize) * 0.5f;
         m_posY = (H - dialSize) * 0.5f;
+        m_posInit = true;
     }
 
     // Bounce off edges
@@ -1757,15 +1763,16 @@ void ScreenSaverView::paintPongClock(QPainter &p)
     m_pongPL = qBound(top, m_pongPL, bot - ph);
     m_pongPR = qBound(top, m_pongPR, bot - ph);
 
+    // Continuous rally: the ball always bounces off the paddle plane (paddles
+    // track to stay under it), with a little "english" so the angle varies.
+    float maxVY = 5.0f * u;
     if (m_pongBallX < lx + pw + br) {
-        if (m_pongBallY > m_pongPL - br && m_pongBallY < m_pongPL + ph + br) {
-            m_pongVX = fabsf(m_pongVX); m_pongBallX = lx + pw + br;
-        } else if (m_pongBallX < -20.0f * u) { m_pongBallX = bw * 0.5f; m_pongBallY = bh * 0.5f; }
+        m_pongBallX = lx + pw + br; m_pongVX = fabsf(m_pongVX);
+        m_pongVY = qBound(-maxVY, m_pongVY + (m_pongBallY - (m_pongPL + ph * 0.5f)) / (ph * 0.5f) * 1.3f * u, maxVY);
     }
     if (m_pongBallX > rx - br) {
-        if (m_pongBallY > m_pongPR - br && m_pongBallY < m_pongPR + ph + br) {
-            m_pongVX = -fabsf(m_pongVX); m_pongBallX = rx - br;
-        } else if (m_pongBallX > bw + 20.0f * u) { m_pongBallX = bw * 0.5f; m_pongBallY = bh * 0.5f; }
+        m_pongBallX = rx - br; m_pongVX = -fabsf(m_pongVX);
+        m_pongVY = qBound(-maxVY, m_pongVY + (m_pongBallY - (m_pongPR + ph * 0.5f)) / (ph * 0.5f) * 1.3f * u, maxVY);
     }
 
     QColor white = m_currentTheme.colors.numerals;
