@@ -242,6 +242,11 @@ const FACE_CFG = {
   "Regulator":       { t:"regulator" },
   "Word Clock":      { t:"word" },
   "Berlin Uhr":      { t:"berlin" },
+  "Pong":            { t:"pong" },
+  "Binary":          { t:"binary", c:"#33e0ff" },
+  "Fibonacci":       { t:"fib" },
+  "Sundial":         { t:"sundial" },
+  "Flip Dot":        { t:"flipdot", c:"#ffd23a" },
 };
 
 function drawClockThumb(ctx, w, h, face) {
@@ -260,6 +265,11 @@ function drawClockThumb(ctx, w, h, face) {
   if (cfg.t === "regulator") return thumbRegulator(ctx, w, h);
   if (cfg.t === "word")      return thumbWord(ctx, w, h);
   if (cfg.t === "berlin")    return thumbBerlin(ctx, w, h);
+  if (cfg.t === "pong")      return thumbPong(ctx, w, h);
+  if (cfg.t === "binary")    return thumbBinary(ctx, w, h, cfg.c);
+  if (cfg.t === "fib")       return thumbFib(ctx, w, h);
+  if (cfg.t === "sundial")   return thumbSundial(ctx, w, h);
+  if (cfg.t === "flipdot")   return thumbFlipdot(ctx, w, h, cfg.c);
 }
 
 function thumbAnalog(ctx, w, h, c) {
@@ -489,6 +499,86 @@ function thumbBerlin(ctx, w, h) {
   row(4, 0, rowY[1], () => [red, redOff]);
   row(11, 1, rowY[2], i => ((i + 1) % 3 === 0) ? [red, redOff] : [yel, yelOff]);
   row(4, 3, rowY[3], () => [yel, yelOff]);
+}
+
+const TF57 = {
+ '0':["01110","10001","10011","10101","11001","10001","01110"],
+ '1':["00100","01100","00100","00100","00100","00100","01110"],
+ '2':["01110","10001","00001","00010","00100","01000","11111"],
+ '3':["11111","00010","00100","00010","00001","10001","01110"],
+ '4':["00010","00110","01010","10010","11111","00010","00010"],
+ '5':["11111","10000","11110","00001","00001","10001","01110"],
+ '6':["00110","01000","10000","11110","10001","10001","01110"],
+ '7':["11111","00001","00010","00100","01000","01000","01000"],
+ '8':["01110","10001","10001","01110","10001","10001","01110"],
+ '9':["01110","10001","10001","01111","00001","00010","01100"]
+};
+
+function thumbPong(ctx, w, h) {
+  ctx.fillStyle = "#000"; ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, w, 3); ctx.fillRect(0, h - 3, w, 3);
+  for (let y = 6; y < h - 6; y += 12) ctx.fillRect(w / 2 - 2, y, 4, 7);
+  ctx.font = "bold 22px 'DejaVu Sans Mono', monospace";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText("10", w * 0.30, 20); ctx.fillText("10", w * 0.70, 20);
+  ctx.fillRect(8, h / 2 - 8, 5, 28); ctx.fillRect(w - 13, h / 2 - 2, 5, 28);
+  ctx.fillRect(w / 2 + 16, h / 2 - 3, 6, 6);
+}
+
+function thumbBinary(ctx, w, h, col) {
+  ctx.fillStyle = "#0a0c10"; ctx.fillRect(0, 0, w, h);
+  const cols = [1, 0, 3, 6, 4, 2], maxV = [2, 9, 5, 9, 5, 9];
+  const colW = w / 6, baseY = h - 18, pitch = 15, dotR = 5;
+  for (let i = 0; i < 6; i++) {
+    const cx = colW * i + colW / 2, v = cols[i];
+    for (let e = 0; e < 4; e++) {
+      const bv = 1 << e; if (bv > maxV[i]) break;
+      const on = (v >> e) & 1, y = baseY - e * pitch;
+      ctx.beginPath(); ctx.arc(cx, y, dotR, 0, 7);
+      if (on) { ctx.shadowColor = col; ctx.shadowBlur = 6; ctx.fillStyle = col; ctx.fill(); ctx.shadowBlur = 0; }
+      else { ctx.fillStyle = "rgba(80,120,140,0.18)"; ctx.fill(); ctx.strokeStyle = "rgba(120,160,180,0.3)"; ctx.lineWidth = 1; ctx.stroke(); }
+    }
+  }
+}
+
+function thumbFib(ctx, w, h) {
+  ctx.fillStyle = "#0e0f13"; ctx.fillRect(0, 0, w, h);
+  const u = Math.min(w / 8.5, h / 5.4), ox = (w - 8 * u) / 2, oy = (h - 5 * u) / 2;
+  const sq = [[5,0,0,"#37c46a"],[3,5,0,"#e2453a"],[2,5,3,"#171920"],[1,7,3,"#4aa3ff"],[1,7,4,"#171920"]];
+  for (const [s, c, r, col] of sq) { ctx.fillStyle = col; roundRect(ctx, ox + c*u+1, oy + r*u+1, s*u-2, s*u-2, 3); ctx.fill(); }
+}
+
+function thumbSundial(ctx, w, h) {
+  const hx = h * 0.72;
+  const g = ctx.createLinearGradient(0, 0, 0, hx);
+  g.addColorStop(0, "#3a7bd5"); g.addColorStop(1, "#bfe3ff");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, w, hx);
+  ctx.fillStyle = "#15110d"; ctx.fillRect(0, hx, w, h - hx);
+  ctx.shadowColor = "#ffd27f"; ctx.shadowBlur = 12; ctx.fillStyle = "#ffe39a";
+  ctx.beginPath(); ctx.arc(w * 0.62, h * 0.30, 11, 0, 7); ctx.fill(); ctx.shadowBlur = 0;
+  ctx.strokeStyle = "rgba(0,0,0,0.5)"; ctx.lineWidth = 4; ctx.lineCap = "round";
+  ctx.beginPath(); ctx.moveTo(w / 2, hx); ctx.lineTo(w * 0.30, hx - 2); ctx.stroke();
+  ctx.fillStyle = "#0c0a08"; ctx.beginPath();
+  ctx.moveTo(w / 2 - 3, hx); ctx.lineTo(w / 2, hx - 22); ctx.lineTo(w / 2 + 3, hx); ctx.fill();
+}
+
+function thumbFlipdot(ctx, w, h, col) {
+  ctx.fillStyle = "#0d0d0c"; roundRect(ctx, 4, 6, w - 8, h - 12, 8); ctx.fill();
+  ctx.strokeStyle = "rgba(120,110,60,0.3)"; ctx.lineWidth = 1; ctx.stroke();
+  const grid = [[],[],[],[],[],[],[]];
+  const blank = () => { for (let r = 0; r < 7; r++) grid[r].push(0); };
+  for (const ch of "10:36") {
+    if (ch === ":") { blank(); const cc = [0,0,1,0,1,0,0]; for (let r = 0; r < 7; r++) grid[r].push(cc[r]); blank(); continue; }
+    const f = TF57[ch]; for (let c = 0; c < 5; c++) for (let r = 0; r < 7; r++) grid[r].push(f[r][c] === "1" ? 1 : 0); blank();
+  }
+  const nC = grid[0].length, pitch = Math.min((w - 24) / nC, (h - 24) / 7), dotR = pitch * 0.38;
+  const gw = nC * pitch, gh = 7 * pitch, ox = (w - gw) / 2 + pitch / 2, oy = (h - gh) / 2 + pitch / 2;
+  for (let r = 0; r < 7; r++) for (let c = 0; c < nC; c++) {
+    const x = ox + c * pitch, y = oy + r * pitch;
+    if (grid[r][c]) { ctx.fillStyle = col; ctx.shadowColor = col; ctx.shadowBlur = 5; ctx.beginPath(); ctx.arc(x, y, dotR, 0, 7); ctx.fill(); ctx.shadowBlur = 0; }
+    else { ctx.fillStyle = "#1a1a18"; ctx.beginPath(); ctx.arc(x, y, dotR, 0, 7); ctx.fill(); }
+  }
 }
 
 function roundRect(ctx, x, y, w, h, r) {

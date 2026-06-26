@@ -60,6 +60,11 @@ private:
     void paintRegulatorClock(QPainter &painter);
     void paintWordClock(QPainter &painter);
     void paintBerlinUhr(QPainter &painter);
+    void paintPongClock(QPainter &painter);
+    void paintBinaryClock(QPainter &painter);
+    void paintFibonacciClock(QPainter &painter);
+    void paintSundialClock(QPainter &painter);
+    void paintFlipDotClock(QPainter &painter);
 
     // Digital style renderers (dispatched from paintDigitalClock)
     void paintDigitalNeon(QPainter &painter);
@@ -106,6 +111,12 @@ private:
     // Color cycling & breathing
     float m_hue = 180.0f;
     float m_breathePhase = 0.0f;
+
+    // Pong face state (persists across frames; reset in start())
+    bool  m_pongInit = false;
+    float m_pongBallX = 0, m_pongBallY = 0;
+    float m_pongVX = 0, m_pongVY = 0;
+    float m_pongPL = 0, m_pongPR = 0;
 };
 
 #endif // SCREENSAVERVIEW_H

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The screensaver activates after 5 minutes of idle time (no playback and no user interaction). It randomly selects one of 20 themed clock faces each time it activates: 12 analog dials, 6 digital styles, and 2 spatial/lamp faces. All faces float and bounce around the screen to prevent burn-in. Any mouse click, key press, or music playback immediately deactivates it.
+The screensaver activates after 5 minutes of idle time (no playback and no user interaction). It randomly selects one of 25 themed clock faces each time it activates: 12 analog dials, 6 digital styles, 2 spatial/lamp faces, and 5 experimental faces. All faces float and bounce around the screen to prevent burn-in. Any mouse click, key press, or music playback immediately deactivates it.
 
 ![Digital clock screensaver](../screenshots/screensaver-digital.png)
 
@@ -58,6 +58,20 @@ These two faces encode the time without hands or a digit readout. Both are route
 |-------|------|
 | **Word Clock** | QLOCKTWO-style 11×10 letter matrix. The current time is spelled out in glowing words (`IT IS · TEN · PAST · TEN`) over a dim field of unlit letters; updates on the 5-minute boundary. `wordClockLitCells()` maps hour/minute to the lit cell set. |
 | **Berlin Uhr** | Mengenlehreuhr / set-theory lamp clock (Dieter Binninger, 1975). A blinking seconds lamp over four rows of red/yellow lamps: 5-hour, 1-hour, 5-minute (quarters in red), 1-minute. |
+
+### Experimental Faces
+
+Five faces in lanes the others don't cover. Each is routed through `paintAnalogClock()` via its own flag and uses `placeFloatingBlock()` to drift.
+
+| Face | Look |
+|-------|------|
+| **Pong** | A self-playing Pong court — the **score is the time** (hours vs. minutes). Paddles ease toward the bouncing ball; the 1280×400 panel is almost exactly a Pong screen. The only face with persistent per-frame state (ball/paddle positions, reset in `start()`). |
+| **Binary** | Six columns of glowing dots — `H H : M M : S S` in binary-coded decimal, least-significant bit at the bottom, only the meaningful bits per column drawn. |
+| **Fibonacci** | The Fibonacci clock (Philippe Chrétien). Five squares sized 1·1·2·3·5 in a golden rectangle; red = hours, green = minutes (×5), blue = both, off = unused. `fibDecode()` brute-forces a valid colouring. |
+| **Sundial** | A virtual sun (or moon at night, with stars) arcs over a sky whose gradient is interpolated from the real time of day; a gnomon casts a shadow toward hour marks on the horizon, with a small digital readout. |
+| **Flip Dot** | An electromechanical dot-matrix transit board. Time is rendered in a shared 5×7 dot font (`DOT57`), lit dots bright amber with a highlight over dark recessed dots. |
+
+The shared 5×7 dot font (`DOT57`) and `drawDot57()` helper back both the Pong score and the Flip-Dot board.
 
 The original Neon style renders with 3-layer glow via QPainterPath strokes (outer wide/low-alpha, mid medium, core narrow white-tinted fill). Fonts: DejaVu Sans Mono for time (44px * UI_SCALE), DejaVu Sans for AM/PM (18px) and date (13px).
 
@@ -124,4 +138,4 @@ The analog clock is optimized for Raspberry Pi 4:
 2. Run: `./start.sh`
 3. Wait for idle timeout (or temporarily reduce `SCREENSAVER_TIMEOUT_MS` for testing)
 4. Dismiss (click or keypress), wait again — will get a different random theme
-5. 20 possible themes — analog: Luxury, Aviator, Diver, Minimalist, Chronograph, Neon Retro, Bauhaus, Mondaine, Orbital, Guilloché, Wandering Hours, Regulator; digital: Neon, Seven Segment, Split Flap, Nixie, Terminal, VFD; spatial/lamp: Word Clock, Berlin Uhr
+5. 25 possible themes — analog: Luxury, Aviator, Diver, Minimalist, Chronograph, Neon Retro, Bauhaus, Mondaine, Orbital, Guilloché, Wandering Hours, Regulator; digital: Neon, Seven Segment, Split Flap, Nixie, Terminal, VFD; spatial/lamp: Word Clock, Berlin Uhr; experimental: Pong, Binary, Fibonacci, Sundial, Flip Dot
