@@ -45,8 +45,12 @@ A few of the screensaver clock faces (shown on the device's 1280×400 display):
 | VFD — 80s hi-fi vacuum-fluorescent display | Word Clock — QLOCKTWO-style letter matrix |
 | ![Wandering Hours clock](screenshots/clock-wandering.png) | ![Regulator clock](screenshots/clock-regulator.png) |
 | Wandering Hours — Urwerk-style satellite complication | Regulator — separate H · M · S sub-dials |
-| ![Berlin Uhr clock](screenshots/clock-berlin.png) | |
-| Berlin Uhr — Mengenlehreuhr set-theory lamp clock | |
+| ![Berlin Uhr clock](screenshots/clock-berlin.png) | ![Pong clock](screenshots/clock-pong.png) |
+| Berlin Uhr — Mengenlehreuhr set-theory lamp clock | Pong — self-playing; the score is the time |
+| ![Binary clock](screenshots/clock-binary.png) | ![Fibonacci clock](screenshots/clock-fibonacci.png) |
+| Binary — BCD dot columns (H H : M M : S S) | Fibonacci — colour-square clock (red=hr, green=min, blue=both) |
+| ![Sundial clock](screenshots/clock-sundial.png) | ![Flip-Dot clock](screenshots/clock-flipdot.png) |
+| Sundial — virtual sun + gnomon shadow, time-of-day sky | Flip-Dot — electromechanical dot-matrix board |
 
 ## Features
 
