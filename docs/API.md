@@ -68,7 +68,7 @@ Paths for `/api/browse` and `/api/add` are relative to `musicRoot` and strictly 
 | GET | `/api/clock?index=N` | by theme index |
 | GET | `/api/clock/list` | list face names |
 
-Available faces: Luxury, Aviator, Diver, Minimalist, Chronograph, Neon Retro, Bauhaus, Mondaine, Orbital, Guilloche, Digital, Seven Segment, Split Flap, Nixie, Terminal (or GET `/api/clock/list`).
+Available faces: Luxury, Aviator, Diver, Minimalist, Chronograph, Neon Retro, Bauhaus, Mondaine, Orbital, Guilloche, Digital, Seven Segment, Split Flap, Nixie, Terminal, VFD, Wandering Hours, Regulator, Word Clock, Berlin Uhr (or GET `/api/clock/list`).
 
 ### Meta
 | Method | Path | Notes |

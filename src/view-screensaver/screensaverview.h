@@ -56,6 +56,10 @@ private:
     void paintDigitalClock(QPainter &painter);
     void paintAnalogClock(QPainter &painter);
     void paintOrbitalClock(QPainter &painter);
+    void paintWanderingClock(QPainter &painter);
+    void paintRegulatorClock(QPainter &painter);
+    void paintWordClock(QPainter &painter);
+    void paintBerlinUhr(QPainter &painter);
 
     // Digital style renderers (dispatched from paintDigitalClock)
     void paintDigitalNeon(QPainter &painter);
@@ -63,6 +67,7 @@ private:
     void paintDigitalSplitFlap(QPainter &painter);
     void paintDigitalNixie(QPainter &painter);
     void paintDigitalTerminal(QPainter &painter);
+    void paintDigitalVFD(QPainter &painter);
 
     // Position a content block of the given size, bouncing off edges.
     // Updates m_posX/m_posY/velocity and returns the block's top-left corner.
