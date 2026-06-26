@@ -112,6 +112,11 @@ struct ClockTheme {
     bool regulator              = false;  // separate H/M/S sub-dials across the panel
     bool wordClock              = false;  // QLOCKTWO-style letter matrix
     bool berlinUhr              = false;  // Mengenlehreuhr set-theory lamp clock
+    bool pong                   = false;  // self-playing Pong; score = time
+    bool binary                 = false;  // BCD binary dot columns
+    bool fibonacci              = false;  // Fibonacci colour-square clock
+    bool sundial                = false;  // virtual sun/moon + gnomon shadow
+    bool flipDot                = false;  // electromechanical dot-matrix board
     bool outlineOnly            = false;  // hands drawn as outlines (no fill)
     bool hueCycling             = false;
     float glowIntensity         = 1.0f;
@@ -817,6 +822,65 @@ inline ClockTheme makeBerlinUhrTheme()
     return t;
 }
 
+inline ClockTheme makePongTheme()
+{
+    ClockTheme t;
+    t.name = "Pong";
+    t.pong = true;
+    t.colors.dial       = QColor(0, 0, 0);
+    t.colors.numerals   = QColor(255, 255, 255);
+    t.colors.secondHand = QColor(255, 255, 255);
+    t.breatheAmount     = 0.0f;
+    return t;
+}
+
+inline ClockTheme makeBinaryTheme()
+{
+    ClockTheme t;
+    t.name = "Binary";
+    t.binary = true;
+    t.colors.dial       = QColor(10, 12, 16);
+    t.colors.secondHand = QColor(51, 224, 255);      // lit-dot cyan
+    t.colors.numerals   = QColor(150, 170, 190);
+    t.breatheAmount     = 0.0f;
+    return t;
+}
+
+inline ClockTheme makeFibonacciTheme()
+{
+    ClockTheme t;
+    t.name = "Fibonacci";
+    t.fibonacci = true;
+    t.colors.dial       = QColor(14, 15, 19);
+    t.colors.hourHand   = QColor(226, 69, 58);       // red = hours
+    t.colors.minuteHand = QColor(55, 196, 106);      // green = minutes
+    t.colors.secondHand = QColor(74, 163, 255);      // blue = both
+    t.colors.ticks      = QColor(23, 25, 32);        // off square
+    t.breatheAmount     = 0.0f;
+    return t;
+}
+
+inline ClockTheme makeSundialTheme()
+{
+    ClockTheme t;
+    t.name = "Sundial";
+    t.sundial = true;
+    t.colors.numerals   = QColor(255, 255, 255);
+    t.breatheAmount     = 0.0f;
+    return t;
+}
+
+inline ClockTheme makeFlipDotTheme()
+{
+    ClockTheme t;
+    t.name = "Flip Dot";
+    t.flipDot = true;
+    t.colors.dial       = QColor(7, 7, 7);
+    t.colors.secondHand = QColor(255, 210, 58);      // lit dot amber
+    t.breatheAmount     = 0.0f;
+    return t;
+}
+
 inline QVector<ClockTheme> getAllClockThemes()
 {
     return {
@@ -839,7 +903,12 @@ inline QVector<ClockTheme> getAllClockThemes()
         makeWanderingTheme(),
         makeRegulatorTheme(),
         makeWordClockTheme(),
-        makeBerlinUhrTheme()
+        makeBerlinUhrTheme(),
+        makePongTheme(),
+        makeBinaryTheme(),
+        makeFibonacciTheme(),
+        makeSundialTheme(),
+        makeFlipDotTheme()
     };
 }
 

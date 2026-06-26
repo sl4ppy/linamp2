@@ -133,6 +133,7 @@ void ScreenSaverView::start(int themeIndex)
     m_themeIndex = themeIndex;
     m_currentTheme = themes[m_themeIndex];
     m_clockMode = m_currentTheme.isDigital ? Digital : Analog;
+    m_pongInit = false;
 }
 
 QStringList ScreenSaverView::faceNames()
@@ -731,6 +732,11 @@ void ScreenSaverView::paintAnalogClock(QPainter &painter)
     if (theme.regulator) { paintRegulatorClock(painter); return; }
     if (theme.wordClock) { paintWordClock(painter);      return; }
     if (theme.berlinUhr) { paintBerlinUhr(painter);      return; }
+    if (theme.pong)      { paintPongClock(painter);      return; }
+    if (theme.binary)    { paintBinaryClock(painter);    return; }
+    if (theme.fibonacci) { paintFibonacciClock(painter); return; }
+    if (theme.sundial)   { paintSundialClock(painter);   return; }
+    if (theme.flipDot)   { paintFlipDotClock(painter);   return; }
 
     float radius = qMin(W, H) * theme.dialRadiusFraction;
     float dialSize = radius * 2.0f + 8.0f * UI_SCALE; // bounding box with margin
@@ -1691,6 +1697,362 @@ void ScreenSaverView::paintBerlinUhr(QPainter &painter)
     }
 
     row4(m1, top + 278.0f * u, yel, yelOff);    // 1-minute lamps
+}
+
+// --- 5x7 dot font (shared by Pong score + Flip-Dot) ---
+
+static const char *const DOT57[10][7] = {
+    {"01110","10001","10011","10101","11001","10001","01110"}, // 0
+    {"00100","01100","00100","00100","00100","00100","01110"}, // 1
+    {"01110","10001","00001","00010","00100","01000","11111"}, // 2
+    {"11111","00010","00100","00010","00001","10001","01110"}, // 3
+    {"00010","00110","01010","10010","11111","00010","00010"}, // 4
+    {"11111","10000","11110","00001","00001","10001","01110"}, // 5
+    {"00110","01000","10000","11110","10001","10001","01110"}, // 6
+    {"11111","00001","00010","00100","01000","01000","01000"}, // 7
+    {"01110","10001","10001","01110","10001","10001","01110"}, // 8
+    {"01110","10001","10001","01111","00001","00010","01100"}, // 9
+};
+
+static void drawDot57(QPainter &p, const QString &s, float x, float y, float dot, const QColor &col)
+{
+    p.setPen(Qt::NoPen); p.setBrush(col);
+    float cx = x;
+    for (const QChar &ch : s) {
+        int d = ch.digitValue();
+        if (d >= 0 && d <= 9)
+            for (int r = 0; r < 7; r++)
+                for (int c = 0; c < 5; c++)
+                    if (DOT57[d][r][c] == '1')
+                        p.drawRect(QRectF(cx + c * dot, y + r * dot, dot - 1.0f, dot - 1.0f));
+        cx += 6.0f * dot;
+    }
+}
+
+// --- Pong: the court self-plays, the score is the time ---
+
+void ScreenSaverView::paintPongClock(QPainter &p)
+{
+    float u = qMin(height() / 400.0f, width() / 1280.0f);
+    float bw = width() * 0.94f, bh = height() * 0.90f;
+    QPointF tl = placeFloatingBlock(bw, bh);
+    float ox = tl.x(), oy = tl.y();
+
+    float ph = 84.0f * u, pw = 14.0f * u, lx = 30.0f * u, rx = bw - 30.0f * u - pw;
+    float top = 8.0f * u, bot = bh - 8.0f * u, br = 7.0f * u;
+
+    if (!m_pongInit) {
+        m_pongBallX = bw * 0.5f; m_pongBallY = bh * 0.5f;
+        m_pongVX = 4.4f * u; m_pongVY = 2.7f * u;
+        m_pongPL = bh * 0.5f - ph * 0.5f; m_pongPR = m_pongPL;
+        m_pongInit = true;
+    }
+
+    m_pongBallX += m_pongVX; m_pongBallY += m_pongVY;
+    if (m_pongBallY < top + br) { m_pongBallY = top + br; m_pongVY = fabsf(m_pongVY); }
+    if (m_pongBallY > bot - br) { m_pongBallY = bot - br; m_pongVY = -fabsf(m_pongVY); }
+
+    m_pongPL += ((m_pongBallY - ph * 0.5f) - m_pongPL) * 0.09f;
+    m_pongPR += ((m_pongBallY - ph * 0.5f) - m_pongPR) * 0.09f;
+    m_pongPL = qBound(top, m_pongPL, bot - ph);
+    m_pongPR = qBound(top, m_pongPR, bot - ph);
+
+    if (m_pongBallX < lx + pw + br) {
+        if (m_pongBallY > m_pongPL - br && m_pongBallY < m_pongPL + ph + br) {
+            m_pongVX = fabsf(m_pongVX); m_pongBallX = lx + pw + br;
+        } else if (m_pongBallX < -20.0f * u) { m_pongBallX = bw * 0.5f; m_pongBallY = bh * 0.5f; }
+    }
+    if (m_pongBallX > rx - br) {
+        if (m_pongBallY > m_pongPR - br && m_pongBallY < m_pongPR + ph + br) {
+            m_pongVX = -fabsf(m_pongVX); m_pongBallX = rx - br;
+        } else if (m_pongBallX > bw + 20.0f * u) { m_pongBallX = bw * 0.5f; m_pongBallY = bh * 0.5f; }
+    }
+
+    QColor white = m_currentTheme.colors.numerals;
+    p.setRenderHint(QPainter::Antialiasing, false);
+    p.setPen(Qt::NoPen); p.setBrush(white);
+    p.drawRect(QRectF(ox, oy, bw, 6.0f * u));
+    p.drawRect(QRectF(ox, oy + bh - 6.0f * u, bw, 6.0f * u));
+    for (float y = oy + 12.0f * u; y < oy + bh - 12.0f * u; y += 30.0f * u)
+        p.drawRect(QRectF(ox + bw * 0.5f - 4.0f * u, y, 8.0f * u, 16.0f * u));
+
+    QTime tm = QTime::currentTime();
+    int H = tm.hour() % 12; if (H == 0) H = 12;
+    QString hh = QString("%1").arg(H, 2, 10, QChar('0'));
+    QString mm = QString("%1").arg(tm.minute(), 2, 10, QChar('0'));
+    float dot = 9.0f * u, scoreW = 11.0f * dot;
+    drawDot57(p, hh, ox + bw * 0.5f - 40.0f * u - scoreW, oy + 34.0f * u, dot, white);
+    drawDot57(p, mm, ox + bw * 0.5f + 40.0f * u,          oy + 34.0f * u, dot, white);
+
+    p.drawRect(QRectF(ox + lx, oy + m_pongPL, pw, ph));
+    p.drawRect(QRectF(ox + rx, oy + m_pongPR, pw, ph));
+    p.drawRect(QRectF(ox + m_pongBallX - br, oy + m_pongBallY - br, 2 * br, 2 * br));
+    p.setRenderHint(QPainter::Antialiasing, true);
+}
+
+// --- Binary: BCD dot columns (H H : M M : S S) ---
+
+void ScreenSaverView::paintBinaryClock(QPainter &p)
+{
+    float u = qMin(height() / 400.0f, width() / 1280.0f);
+    float bw = 900.0f * u, bh = 300.0f * u;
+    QPointF tl = placeFloatingBlock(bw, bh);
+
+    QTime tm = QTime::currentTime();
+    int H = tm.hour(), M = tm.minute(), S = tm.second();
+    int cols[6] = { H / 10, H % 10, M / 10, M % 10, S / 10, S % 10 };
+    int maxV[6] = { 2, 9, 5, 9, 5, 9 };
+    static const char *labels[6] = { "H", "H", "M", "M", "S", "S" };
+
+    QColor accent = m_currentTheme.colors.secondHand.isValid()
+                  ? m_currentTheme.colors.secondHand : QColor(51, 224, 255);
+
+    float colW = bw / 6.0f, x0 = tl.x() + colW * 0.5f;
+    float baseY = tl.y() + bh * 0.62f, pitch = 56.0f * u, dotR = 18.0f * u;
+
+    p.setRenderHint(QPainter::Antialiasing, true);
+    for (int i = 0; i < 6; i++) {
+        float cx = x0 + i * colW;
+        for (int e = 0; e < 4; e++) {
+            int bv = 1 << e; if (bv > maxV[i]) break;
+            bool on = (cols[i] >> e) & 1;
+            float y = baseY - e * pitch;
+            if (on) {
+                QColor g = accent; g.setAlphaF(0.30f);
+                p.setPen(Qt::NoPen); p.setBrush(g);
+                p.drawEllipse(QPointF(cx, y), dotR + 6.0f * u, dotR + 6.0f * u);
+                p.setBrush(accent);
+                p.drawEllipse(QPointF(cx, y), dotR, dotR);
+            } else {
+                p.setPen(QPen(QColor(120, 160, 180, 70), 1.5f * u));
+                p.setBrush(QColor(70, 110, 130, 40));
+                p.drawEllipse(QPointF(cx, y), dotR, dotR);
+            }
+        }
+        QFont lf("DejaVu Sans"); lf.setBold(true); lf.setPixelSize(static_cast<int>(19.0f * u));
+        p.setFont(lf); p.setPen(QColor(150, 170, 190, 153));
+        p.drawText(QRectF(cx - colW * 0.5f, baseY + 28.0f * u, colW, 26.0f * u),
+                   Qt::AlignCenter, QString::fromLatin1(labels[i]));
+        QFont vf("DejaVu Sans Mono"); vf.setPixelSize(static_cast<int>(14.0f * u));
+        p.setFont(vf); p.setPen(QColor(110, 200, 230, 115));
+        p.drawText(QRectF(cx - colW * 0.5f, baseY + 52.0f * u, colW, 20.0f * u),
+                   Qt::AlignCenter, QString::number(cols[i]));
+    }
+}
+
+// --- Fibonacci: colour-square clock ---
+
+static void fibDecode(int h, int mm, int *a)   // values [5,3,2,1,1]; a[i] in {0 off,1 red,2 green,3 blue}
+{
+    static const int val[5] = { 5, 3, 2, 1, 1 };
+    for (int mask = 0; mask < 1024; mask++) {
+        int m = mask, hs = 0, ms = 0, tmp[5];
+        for (int i = 0; i < 5; i++) {
+            int c = m & 3; m >>= 2; tmp[i] = c;
+            if (c == 1 || c == 3) hs += val[i];
+            if (c == 2 || c == 3) ms += val[i];
+        }
+        if (hs == h && ms == mm) { for (int i = 0; i < 5; i++) a[i] = tmp[i]; return; }
+    }
+    for (int i = 0; i < 5; i++) a[i] = 0;
+}
+
+void ScreenSaverView::paintFibonacciClock(QPainter &p)
+{
+    float u = qMin(height() / 400.0f, width() / 1280.0f);
+
+    QTime tm = QTime::currentTime();
+    int H = tm.hour() % 12; if (H == 0) H = 12;
+    int mm = (tm.minute() + 2) / 5; if (mm >= 12) mm = 0;
+    int a[5]; fibDecode(H, mm, a);
+
+    float unit = 64.0f * u;
+    float bw = 8.0f * unit, bh = 5.0f * unit + 38.0f * u;
+    QPointF tl = placeFloatingBlock(bw, bh);
+    float ox = tl.x(), oy = tl.y();
+
+    QColor COL[4] = { m_currentTheme.colors.ticks,       // off (dark)
+                      m_currentTheme.colors.hourHand,     // red
+                      m_currentTheme.colors.minuteHand,   // green
+                      m_currentTheme.colors.secondHand }; // blue
+
+    struct Sq { int s, c, r; };
+    static const Sq sq[5] = { {5,0,0}, {3,5,0}, {2,5,3}, {1,7,3}, {1,7,4} };
+    p.setRenderHint(QPainter::Antialiasing, true);
+    p.setPen(Qt::NoPen);
+    for (int i = 0; i < 5; i++) {
+        p.setBrush(COL[a[i]]);
+        p.drawRoundedRect(QRectF(ox + sq[i].c * unit + 3.0f * u, oy + sq[i].r * unit + 3.0f * u,
+                                 sq[i].s * unit - 6.0f * u, sq[i].s * unit - 6.0f * u),
+                          6.0f * u, 6.0f * u);
+    }
+
+    QFont lf("DejaVu Sans"); lf.setPixelSize(static_cast<int>(13.0f * u));
+    p.setFont(lf);
+    struct Leg { QColor c; const char *t; };
+    Leg leg[3] = { { COL[1], "hours" }, { COL[2], "minutes" }, { COL[3], "both" } };
+    float legX = ox, legY = oy + 5.0f * unit + 10.0f * u;
+    QFontMetricsF fm(lf);
+    for (const Leg &L : leg) {
+        p.setPen(Qt::NoPen); p.setBrush(L.c);
+        p.drawRoundedRect(QRectF(legX, legY, 14.0f * u, 14.0f * u), 3, 3);
+        p.setPen(QColor(170, 178, 190, 204));
+        p.drawText(QPointF(legX + 20.0f * u, legY + 12.0f * u), QString::fromLatin1(L.t));
+        legX += 20.0f * u + fm.horizontalAdvance(QString::fromLatin1(L.t)) + 22.0f * u;
+    }
+}
+
+// --- Sundial: virtual sun/moon + gnomon shadow over a time-of-day sky ---
+
+void ScreenSaverView::paintSundialClock(QPainter &p)
+{
+    float u = qMin(height() / 400.0f, width() / 1280.0f);
+    float bw = width() * 0.96f, bh = height() * 0.94f;
+    QPointF tl = placeFloatingBlock(bw, bh);
+    float ox = tl.x(), oy = tl.y();
+
+    QTime tm = QTime::currentTime();
+    int H = tm.hour(), M = tm.minute();
+    float hf = H + M / 60.0f;
+
+    static const int KFtop[5][3] = { {8,12,32}, {40,58,110}, {58,123,213}, {42,40,92}, {8,12,32} };
+    static const int KFbot[5][3] = { {20,24,52}, {232,140,86}, {180,222,255}, {232,120,72}, {20,24,52} };
+    float seg = hf / 6.0f; int si = qMin(3, static_cast<int>(seg)); float ft = seg - si;
+    auto mix = [&](const int a[5][3], int i, float t) {
+        return QColor(static_cast<int>(a[i][0] + (a[i+1][0]-a[i][0]) * t),
+                      static_cast<int>(a[i][1] + (a[i+1][1]-a[i][1]) * t),
+                      static_cast<int>(a[i][2] + (a[i+1][2]-a[i][2]) * t));
+    };
+    QColor topC = mix(KFtop, si, ft), botC = mix(KFbot, si, ft);
+
+    float horizon = oy + bh * 0.74f;
+    p.setRenderHint(QPainter::Antialiasing, true);
+    QLinearGradient sky(0, oy, 0, horizon);
+    sky.setColorAt(0.0, topC); sky.setColorAt(1.0, botC);
+    p.setPen(Qt::NoPen); p.setBrush(sky);
+    p.drawRect(QRectF(ox, oy, bw, horizon - oy));
+    p.setBrush(QColor(21, 17, 13));
+    p.drawRect(QRectF(ox, horizon, bw, oy + bh - horizon));
+
+    bool isDay = (hf >= 6.0f && hf < 18.0f);
+    if (!isDay) {
+        p.setBrush(QColor(255, 255, 255, 180));
+        static const float sxf[10] = {0.10f,0.24f,0.40f,0.60f,0.76f,0.89f,0.16f,0.50f,0.69f,0.82f};
+        static const float syf[10] = {0.15f,0.30f,0.10f,0.22f,0.18f,0.33f,0.40f,0.13f,0.38f,0.28f};
+        for (int k = 0; k < 10; k++)
+            p.drawRect(QRectF(ox + sxf[k]*bw, oy + syf[k]*bh*0.6f, 2.0f*u, 2.0f*u));
+    }
+
+    float cx = ox + bw * 0.5f;
+    float pp = isDay ? (hf - 6.0f) / 12.0f : fmodf(hf + 6.0f, 24.0f) / 12.0f;
+    float bx = ox + 0.10f*bw + pp * 0.80f*bw;
+    float by = horizon - sinf(pp * static_cast<float>(M_PI)) * (bh * 0.55f);
+
+    float elev = qMax(0.08f, sinf(pp * static_cast<float>(M_PI)));
+    float dir = (bx < cx) ? 1.0f : -1.0f;
+    float shLen = qMin(70.0f * u / elev * (fabsf(cx - bx) / (bw*0.5f) + 0.25f), bw * 0.42f);
+    p.setPen(QPen(QColor(0, 0, 0, 128), 10.0f * u, Qt::SolidLine, Qt::RoundCap));
+    p.drawLine(QPointF(cx, horizon), QPointF(cx + dir * shLen, horizon - 4.0f * u));
+
+    QFont tf("DejaVu Sans"); tf.setPixelSize(static_cast<int>(12.0f * u));
+    p.setFont(tf);
+    for (int hh = 6; hh <= 18; hh += 2) {
+        float ppx = (hh - 6) / 12.0f, txx = ox + 0.10f*bw + ppx * 0.80f*bw;
+        p.setPen(QPen(QColor(255, 255, 255, 46), 2.0f * u));
+        p.drawLine(QPointF(txx, horizon), QPointF(txx, horizon + 14.0f * u));
+        p.setPen(QColor(255, 255, 255, 100));
+        int lbl = hh > 12 ? hh - 12 : hh;
+        p.drawText(QRectF(txx - 14.0f*u, horizon + 16.0f*u, 28.0f*u, 18.0f*u),
+                   Qt::AlignCenter, QString::number(lbl));
+    }
+
+    if (isDay) {
+        QColor g = QColor(255, 210, 127); g.setAlphaF(0.5f);
+        p.setPen(Qt::NoPen); p.setBrush(g);
+        p.drawEllipse(QPointF(bx, by), 44.0f*u, 44.0f*u);
+        p.setBrush(QColor(255, 227, 154));
+        p.drawEllipse(QPointF(bx, by), 30.0f*u, 30.0f*u);
+    } else {
+        p.setPen(Qt::NoPen); p.setBrush(QColor(231, 236, 255));
+        p.drawEllipse(QPointF(bx, by), 24.0f*u, 24.0f*u);
+        p.setBrush(botC);
+        p.drawEllipse(QPointF(bx - 9.0f*u, by - 5.0f*u), 22.0f*u, 22.0f*u);
+    }
+
+    p.setBrush(QColor(12, 10, 8)); p.setPen(Qt::NoPen);
+    QPointF gp[4] = { {cx - 9.0f*u, horizon}, {cx - 3.0f*u, horizon - 78.0f*u},
+                      {cx + 3.0f*u, horizon - 78.0f*u}, {cx + 9.0f*u, horizon} };
+    p.drawConvexPolygon(gp, 4);
+
+    QFont df("DejaVu Sans Mono"); df.setBold(true); df.setPixelSize(static_cast<int>(22.0f*u));
+    p.setFont(df); p.setPen(QColor(255, 255, 255, 217));
+    p.drawText(QPointF(ox + 24.0f*u, oy + 36.0f*u),
+               QString("%1:%2").arg(H,2,10,QChar('0')).arg(M,2,10,QChar('0')));
+}
+
+// --- Flip-Dot: electromechanical dot-matrix board ---
+
+void ScreenSaverView::paintFlipDotClock(QPainter &p)
+{
+    float u = qMin(height() / 400.0f, width() / 1280.0f);
+    QTime tm = QTime::currentTime();
+    int H = tm.hour() % 12; if (H == 0) H = 12;
+    QString s = QString("%1:%2").arg(H,2,10,QChar('0')).arg(tm.minute(),2,10,QChar('0'));
+
+    QVector<QVector<int>> grid(7);
+    auto pushBlank = [&]() { for (int r = 0; r < 7; r++) grid[r].append(0); };
+    for (const QChar &ch : s) {
+        if (ch == QLatin1Char(':')) {
+            pushBlank();
+            static const int colon[7] = {0,0,1,0,1,0,0};
+            for (int r = 0; r < 7; r++) grid[r].append(colon[r]);
+            pushBlank();
+            continue;
+        }
+        int d = ch.digitValue();
+        for (int c = 0; c < 5; c++)
+            for (int r = 0; r < 7; r++)
+                grid[r].append(DOT57[d][r][c] == '1' ? 1 : 0);
+        pushBlank();
+    }
+    int nCols = grid[0].size(), nRows = 7;
+
+    float pitch = qMin((width() * 0.86f) / nCols, (height() * 0.60f) / nRows);
+    float dotR = pitch * 0.40f;
+    float gridW = nCols * pitch, gridH = nRows * pitch;
+    float frame = 32.0f * u;
+
+    QPointF tl = placeFloatingBlock(gridW + frame * 2, gridH + frame * 2);
+    float ox = tl.x() + frame + pitch * 0.5f;
+    float oy = tl.y() + frame + pitch * 0.5f;
+
+    QColor lit = m_currentTheme.colors.secondHand.isValid()
+               ? m_currentTheme.colors.secondHand : QColor(255, 210, 58);
+
+    p.setRenderHint(QPainter::Antialiasing, true);
+    p.setBrush(QColor(13, 13, 12));
+    p.setPen(QPen(QColor(120, 110, 60, 64), 2.0f * u));
+    p.drawRoundedRect(QRectF(tl.x() + frame * 0.4f, tl.y() + frame * 0.4f,
+                             gridW + frame * 1.2f, gridH + frame * 1.2f), 14.0f * u, 14.0f * u);
+
+    for (int r = 0; r < nRows; r++) {
+        for (int c = 0; c < nCols; c++) {
+            float x = ox + c * pitch, y = oy + r * pitch;
+            if (grid[r][c]) {
+                QColor g = lit; g.setAlphaF(0.35f);
+                p.setPen(Qt::NoPen); p.setBrush(g);
+                p.drawEllipse(QPointF(x, y), dotR + 3.0f * u, dotR + 3.0f * u);
+                p.setBrush(lit);
+                p.drawEllipse(QPointF(x, y), dotR, dotR);
+                p.setBrush(QColor(255, 255, 255, 90));
+                p.drawEllipse(QPointF(x - dotR*0.3f, y - dotR*0.3f), dotR*0.32f, dotR*0.32f);
+            } else {
+                p.setPen(QPen(QColor(0, 0, 0, 150), 1.0f));
+                p.setBrush(QColor(26, 26, 24));
+                p.drawEllipse(QPointF(x, y), dotR, dotR);
+            }
+        }
+    }
 }
 
 void ScreenSaverView::mousePressEvent(QMouseEvent *event)

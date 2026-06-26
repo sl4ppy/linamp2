@@ -9,7 +9,7 @@ Linamp is a retro Winamp-inspired music player for Linux/Raspberry Pi, built wit
 > - 📡 **VBAN** — stream audio output over the network to Voicemeeter Banana / VBAN receivers
 > - 🌀 **Geiss** — dreamlike audio-reactive warp visuals (15 warp modes, beat-synced transitions, chromatic dispersion, 2s crossfades) inspired by the 1998 Winamp plugin
 > - 🎆 **AVS** — Winamp AVS-style oscilloscope, starfield, water, mirror, and more
-> - 🕐 **Screensaver** — 20 themed clock faces (12 analog dials + 6 digital styles + 2 spatial/lamp faces) after 5 min idle
+> - 🕐 **Screensaver** — 25 themed clock faces (12 analog dials + 6 digital styles + 2 spatial/lamp + 5 experimental) after 5 min idle
 > - 🔍 **Scalable UI** — 1x through 4x DPI scaling with per-scale stylesheets
 > - 🔌 **HTTP API** — control transport, audio and the screensaver/clocks over the LAN with simple GET requests (see [docs/API.md](docs/API.md))
 > - 🌐 **Web Remote** — a full responsive web interface served by the device itself: now-playing, transport, playlist + sandboxed file browser, source switching, and a clock-face picker with live thumbnails (see [docs/WEBUI.md](docs/WEBUI.md))
@@ -45,8 +45,12 @@ A few of the screensaver clock faces (shown on the device's 1280×400 display):
 | VFD — 80s hi-fi vacuum-fluorescent display | Word Clock — QLOCKTWO-style letter matrix |
 | ![Wandering Hours clock](screenshots/clock-wandering.png) | ![Regulator clock](screenshots/clock-regulator.png) |
 | Wandering Hours — Urwerk-style satellite complication | Regulator — separate H · M · S sub-dials |
-| ![Berlin Uhr clock](screenshots/clock-berlin.png) | |
-| Berlin Uhr — Mengenlehreuhr set-theory lamp clock | |
+| ![Berlin Uhr clock](screenshots/clock-berlin.png) | ![Pong clock](screenshots/clock-pong.png) |
+| Berlin Uhr — Mengenlehreuhr set-theory lamp clock | Pong — self-playing; the score is the time |
+| ![Binary clock](screenshots/clock-binary.png) | ![Fibonacci clock](screenshots/clock-fibonacci.png) |
+| Binary — BCD dot columns (H H : M M : S S) | Fibonacci — colour-square clock (red=hr, green=min, blue=both) |
+| ![Sundial clock](screenshots/clock-sundial.png) | ![Flip-Dot clock](screenshots/clock-flipdot.png) |
+| Sundial — virtual sun + gnomon shadow, time-of-day sky | Flip-Dot — electromechanical dot-matrix board |
 
 ## Features
 
@@ -60,7 +64,7 @@ A few of the screensaver clock faces (shown on the device's 1280×400 display):
 - **Spectrum visualizer** — Real-time FFT-based visualization captured from PipeWire system audio output
 - **Geiss visualizer** — Dreamlike audio-reactive warp visuals inspired by the legendary 1998 Winamp plugin, with beat-synced transitions, chromatic dispersion, and 15 warp modes
 - **AVS visualizer** — Winamp AVS-style visualization with oscilloscope, starfield, water, mirror, and more
-- **Screensaver** — 20 themed clock faces: 12 analog dials (classic watch styles plus Bauhaus, Mondaine Swiss-railway, a hands-free Orbital complication, emerald guilloché, an Urwerk-style Wandering Hours satellite, and a three-dial Regulator), 6 digital styles (neon, seven-segment LED, split-flap, Nixie tube, terminal/CRT, and an 80s-hi-fi VFD), and 2 spatial/lamp faces (a QLOCKTWO-style Word Clock and the Berlin Uhr set-theory clock), randomly selected after 5 minutes idle
+- **Screensaver** — 25 themed clock faces: 12 analog dials (classic watch styles plus Bauhaus, Mondaine Swiss-railway, a hands-free Orbital complication, emerald guilloché, an Urwerk-style Wandering Hours satellite, and a three-dial Regulator), 6 digital styles (neon, seven-segment LED, split-flap, Nixie tube, terminal/CRT, and an 80s-hi-fi VFD), 2 spatial/lamp faces (a QLOCKTWO-style Word Clock and the Berlin Uhr set-theory clock), and 5 experimental faces (a self-playing Pong whose score is the time, a BCD Binary clock, the colour-coded Fibonacci clock, a time-of-day Sundial, and an electromechanical Flip-Dot board), randomly selected after 5 minutes idle
 - **Scalable UI** — 1x through 4x DPI scaling with per-scale stylesheets
 
 ## Architecture
@@ -100,7 +104,7 @@ Views are managed via `QStackedLayout` in `MainWindow` (`src/view-basewindow/mai
 | 0 | `PlayerView` | Main playback UI: spectrum visualizer, track info, transport controls |
 | 1 | `PlaylistView` | File browser and playlist management |
 | 2 | `MainMenuView` | Audio source selection and VBAN toggle |
-| 3 | `ScreenSaverView` | Themed clock faces (12 analog dials + 6 digital styles + 2 spatial/lamp faces), activates after 5 min idle |
+| 3 | `ScreenSaverView` | Themed clock faces (12 analog + 6 digital + 2 spatial/lamp + 5 experimental), activates after 5 min idle |
 | 4 | `AvsView` | AVS-style visualization (accessible from Sources menu) |
 | 5 | `GeissWidget` | Geiss-style warp visualization (tap spectrum or idle during playback) |
 
