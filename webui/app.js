@@ -237,6 +237,11 @@ const FACE_CFG = {
   "Split Flap":   { t:"flap" },
   "Nixie":        { t:"nixie", c:"#ff9a45" },
   "Terminal":     { t:"term",  c:"#36ff74" },
+  "VFD":             { t:"vfd",    c:"#34e7c8" },
+  "Wandering Hours": { t:"wander" },
+  "Regulator":       { t:"regulator" },
+  "Word Clock":      { t:"word" },
+  "Berlin Uhr":      { t:"berlin" },
 };
 
 function drawClockThumb(ctx, w, h, face) {
@@ -250,6 +255,11 @@ function drawClockThumb(ctx, w, h, face) {
   if (cfg.t === "flap")      return thumbFlap(ctx, w, h);
   if (cfg.t === "nixie")     return thumbNixie(ctx, w, h, cfg.c);
   if (cfg.t === "term")      return thumbTerm(ctx, w, h, cfg.c);
+  if (cfg.t === "vfd")       return thumbVFD(ctx, w, h, cfg.c);
+  if (cfg.t === "wander")    return thumbWander(ctx, w, h);
+  if (cfg.t === "regulator") return thumbRegulator(ctx, w, h);
+  if (cfg.t === "word")      return thumbWord(ctx, w, h);
+  if (cfg.t === "berlin")    return thumbBerlin(ctx, w, h);
 }
 
 function thumbAnalog(ctx, w, h, c) {
@@ -393,6 +403,92 @@ function thumbTerm(ctx, w, h, col) {
   ctx.font = "9px 'DejaVu Sans Mono', monospace"; ctx.fillText("linamp:~$ date", 12, 26);
   ctx.font = "bold 20px 'DejaVu Sans Mono', monospace"; ctx.fillText("10:10", 12, 52);
   ctx.fillRect(64, 40, 8, 12);
+}
+
+function thumbVFD(ctx, w, h, col) {
+  ctx.fillStyle = "#070f10"; roundRect(ctx, 2, 8, w - 4, h - 16, 8); ctx.fill();
+  ctx.strokeStyle = "rgba(80,120,120,0.4)"; ctx.lineWidth = 1; ctx.stroke();
+  ctx.shadowColor = col; ctx.shadowBlur = 8; ctx.fillStyle = col;
+  ctx.font = "bold 30px 'DejaVu Sans Mono', monospace";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText("10:08", w / 2, h / 2); ctx.shadowBlur = 0;
+  ctx.strokeStyle = "rgba(120,180,170,0.10)"; ctx.lineWidth = 1;
+  for (let x = 6; x < w - 6; x += 5) { ctx.beginPath(); ctx.moveTo(x, 10); ctx.lineTo(x, h - 10); ctx.stroke(); }
+}
+
+function thumbWander(ctx, w, h) {
+  ctx.fillStyle = "#0c0d12"; ctx.fillRect(0, 0, w, h);
+  const cx = w / 2, cy = h - 14, aR = h * 0.78;
+  ctx.strokeStyle = "rgba(200,210,230,0.4)"; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.arc(cx, cy, aR, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke();
+  ctx.fillStyle = "#1c1f27"; ctx.beginPath(); ctx.arc(cx, cy, 8, 0, 7); ctx.fill();
+  const aAct = Math.PI * 1.5, dr = h * 0.52;
+  const discs = [[aAct - 0.5, false, "9"], [aAct, true, "10"], [aAct + 0.5, false, "11"]];
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  for (const [a, on, t] of discs) {
+    const x = cx + Math.cos(a) * dr, y = cy + Math.sin(a) * dr;
+    ctx.strokeStyle = on ? "rgba(127,212,255,0.5)" : "rgba(150,160,180,0.15)"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x, y); ctx.stroke();
+    if (on) { ctx.shadowColor = "#7fd4ff"; ctx.shadowBlur = 8; }
+    ctx.fillStyle = on ? "#10202b" : "#15171d"; ctx.beginPath(); ctx.arc(x, y, 13, 0, 7); ctx.fill(); ctx.shadowBlur = 0;
+    ctx.strokeStyle = on ? "rgba(127,212,255,0.85)" : "rgba(140,150,170,0.25)"; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = on ? "#eaf6ff" : "rgba(160,170,190,0.4)"; ctx.font = "bold 12px 'DejaVu Sans', sans-serif";
+    ctx.fillText(t, x, y);
+  }
+}
+
+function thumbRegulator(ctx, w, h) {
+  ctx.fillStyle = "#0d1016"; ctx.fillRect(0, 0, w, h);
+  const cy = h / 2;
+  const dial = (cx, R, deg, gold) => {
+    ctx.fillStyle = "#141821"; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.fill();
+    ctx.strokeStyle = "rgba(190,200,220,0.25)"; ctx.lineWidth = 1; ctx.stroke();
+    for (let i = 0; i < 12; i++) {
+      const a = i * Math.PI / 6; ctx.strokeStyle = "rgba(210,220,235,0.4)"; ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * R * 0.78, cy + Math.sin(a) * R * 0.78);
+      ctx.lineTo(cx + Math.cos(a) * R * 0.92, cy + Math.sin(a) * R * 0.92); ctx.stroke();
+    }
+    const a = (deg - 90) * Math.PI / 180; ctx.strokeStyle = gold ? "#ffd34d" : "#e8eef8";
+    ctx.lineWidth = gold ? 2.5 : 1.5; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(a) * R * 0.7, cy + Math.sin(a) * R * 0.7); ctx.stroke();
+    ctx.fillStyle = "#cfd6e2"; ctx.beginPath(); ctx.arc(cx, cy, 2, 0, 7); ctx.fill();
+  };
+  dial(w * 0.22, 16, 300, false); dial(w * 0.5, 22, 120, true); dial(w * 0.78, 16, 240, false);
+}
+
+function thumbWord(ctx, w, h) {
+  ctx.fillStyle = "#0c0e12"; ctx.fillRect(0, 0, w, h);
+  const G = ["ITLISASAMPM", "ACQUARTERDC", "TWENTYFIVEX", "HALFBTENFTO", "PASTERUNINE",
+             "ONESIXTHREE", "FOURFIVETWO", "EIGHTELEVEN", "SEVENTWELVE", "TENSEOCLOCK"];
+  const lit = new Set(["0,0", "0,1", "0,3", "0,4", "3,5", "3,6", "3,7", "4,0", "4,1", "4,2", "4,3", "9,0", "9,1", "9,2"]);
+  const cw = 12, ch = 8;
+  ctx.font = "bold 7px 'DejaVu Sans Mono', monospace"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  for (let r = 0; r < 10; r++) for (let c = 0; c < 11; c++) {
+    const on = lit.has(r + "," + c);
+    if (on) { ctx.shadowColor = "rgba(120,200,255,0.9)"; ctx.shadowBlur = 4; ctx.fillStyle = "#f1f7ff"; }
+    else { ctx.shadowBlur = 0; ctx.fillStyle = "rgba(150,162,182,0.3)"; }
+    ctx.fillText(G[r][c], c * cw + cw / 2, r * ch + ch / 2);
+  }
+  ctx.shadowBlur = 0;
+}
+
+function thumbBerlin(ctx, w, h) {
+  ctx.fillStyle = "#101216"; ctx.fillRect(0, 0, w, h);
+  const red = "#ff3b30", redOff = "#3a1412", yel = "#ffd60a", yelOff = "#3a3410";
+  ctx.fillStyle = yel; ctx.beginPath(); ctx.arc(w / 2, 7, 3, 0, 7); ctx.fill();
+  const rowY = [14, 28, 42, 56], lh = 10, iw = w - 16, x0 = 8;
+  const row = (items, litN, y, colOf) => {
+    const gap = 3, lw = (iw - gap * (items - 1)) / items;
+    for (let i = 0; i < items; i++) {
+      const cc = colOf(i); ctx.fillStyle = i < litN ? cc[0] : cc[1];
+      roundRect(ctx, x0 + i * (lw + gap), y, lw, lh, 2); ctx.fill();
+    }
+  };
+  row(4, 2, rowY[0], () => [red, redOff]);
+  row(4, 0, rowY[1], () => [red, redOff]);
+  row(11, 1, rowY[2], i => ((i + 1) % 3 === 0) ? [red, redOff] : [yel, yelOff]);
+  row(4, 3, rowY[3], () => [yel, yelOff]);
 }
 
 function roundRect(ctx, x, y, w, h, r) {

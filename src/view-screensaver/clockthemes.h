@@ -26,7 +26,8 @@ enum class DigitalStyle {
     SevenSegment,  // segmented LED readout
     SplitFlap,     // Solari departure-board flip tiles
     Nixie,         // warm orange glow-tube digits
-    Terminal       // phosphor-green CRT console
+    Terminal,      // phosphor-green CRT console
+    VFD            // vacuum-fluorescent display (80s hi-fi teal behind glass)
 };
 
 enum class TickShape {
@@ -107,6 +108,10 @@ struct ClockTheme {
     DigitalStyle digitalStyle   = DigitalStyle::Neon;
     bool orbital                = false;  // hands-free arc-trail analog face
     bool guilloche              = false;  // radial sunburst dial texture
+    bool wandering              = false;  // satellite / wandering-hours complication
+    bool regulator              = false;  // separate H/M/S sub-dials across the panel
+    bool wordClock              = false;  // QLOCKTWO-style letter matrix
+    bool berlinUhr              = false;  // Mengenlehreuhr set-theory lamp clock
     bool outlineOnly            = false;  // hands drawn as outlines (no fill)
     bool hueCycling             = false;
     float glowIntensity         = 1.0f;
@@ -744,6 +749,74 @@ inline ClockTheme makeTerminalTheme()
     return t;
 }
 
+inline ClockTheme makeVFDTheme()
+{
+    ClockTheme t;
+    t.name = "VFD";
+    t.isDigital = true;
+    t.digitalStyle = DigitalStyle::VFD;
+    t.colors.secondHand = QColor(52, 231, 200);   // vacuum-fluorescent teal
+    return t;
+}
+
+inline ClockTheme makeWanderingTheme()
+{
+    ClockTheme t;
+    t.name = "Wandering Hours";
+    t.wandering = true;
+    t.colors.dial         = QColor(21, 22, 28);
+    t.colors.rim          = QColor(200, 210, 230);
+    t.colors.hourHand     = QColor(127, 212, 255);   // active disc / marker glow
+    t.colors.minuteHand   = QColor(200, 210, 230);   // arc + ticks
+    t.colors.secondHand    = QColor(127, 212, 255);
+    t.colors.numerals     = QColor(234, 246, 255);
+    t.breatheAmount       = 0.0f;
+    return t;
+}
+
+inline ClockTheme makeRegulatorTheme()
+{
+    ClockTheme t;
+    t.name = "Regulator";
+    t.regulator = true;
+    t.colors.dial         = QColor(27, 32, 41);
+    t.colors.dialEdge     = QColor(14, 17, 22);
+    t.colors.rim          = QColor(190, 200, 220);
+    t.colors.hourHand     = QColor(232, 238, 248);
+    t.colors.minuteHand   = QColor(255, 211, 77);    // gold center minute hand
+    t.colors.secondHand    = QColor(232, 238, 248);
+    t.colors.ticks        = QColor(220, 228, 240);
+    t.colors.numerals     = QColor(225, 232, 245);
+    t.colors.centerPin    = QColor(207, 214, 226);
+    t.breatheAmount       = 0.0f;
+    return t;
+}
+
+inline ClockTheme makeWordClockTheme()
+{
+    ClockTheme t;
+    t.name = "Word Clock";
+    t.wordClock = true;
+    t.colors.dial         = QColor(12, 14, 18);
+    t.colors.numerals     = QColor(241, 247, 255);   // lit letters
+    t.colors.ticks        = QColor(150, 162, 182);   // dim letters
+    t.colors.secondHand    = QColor(120, 200, 255);  // glow tint
+    t.breatheAmount       = 0.0f;
+    return t;
+}
+
+inline ClockTheme makeBerlinUhrTheme()
+{
+    ClockTheme t;
+    t.name = "Berlin Uhr";
+    t.berlinUhr = true;
+    t.colors.dial         = QColor(16, 18, 22);
+    t.colors.hourHand     = QColor(255, 59, 48);     // red lamps
+    t.colors.minuteHand   = QColor(255, 214, 10);    // yellow lamps
+    t.breatheAmount       = 0.0f;
+    return t;
+}
+
 inline QVector<ClockTheme> getAllClockThemes()
 {
     return {
@@ -761,7 +834,12 @@ inline QVector<ClockTheme> getAllClockThemes()
         makeSevenSegTheme(),
         makeSplitFlapTheme(),
         makeNixieTheme(),
-        makeTerminalTheme()
+        makeTerminalTheme(),
+        makeVFDTheme(),
+        makeWanderingTheme(),
+        makeRegulatorTheme(),
+        makeWordClockTheme(),
+        makeBerlinUhrTheme()
     };
 }
 

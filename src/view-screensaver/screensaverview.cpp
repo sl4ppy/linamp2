@@ -11,6 +11,7 @@
 #include <QTransform>
 #include <QRadialGradient>
 #include <QLinearGradient>
+#include <QSet>
 #include <cmath>
 
 // --- Optimized box blur: raw pointer access, integer division ---
@@ -216,6 +217,7 @@ void ScreenSaverView::paintDigitalClock(QPainter &painter)
     case DigitalStyle::SplitFlap:    paintDigitalSplitFlap(painter); break;
     case DigitalStyle::Nixie:        paintDigitalNixie(painter);     break;
     case DigitalStyle::Terminal:     paintDigitalTerminal(painter);  break;
+    case DigitalStyle::VFD:          paintDigitalVFD(painter);       break;
     case DigitalStyle::Neon:
     default:                         paintDigitalNeon(painter);      break;
     }
@@ -724,10 +726,11 @@ void ScreenSaverView::paintAnalogClock(QPainter &painter)
     const int H = height();
     const ClockTheme &theme = m_currentTheme;
 
-    if (theme.orbital) {
-        paintOrbitalClock(painter);
-        return;
-    }
+    if (theme.orbital)   { paintOrbitalClock(painter);   return; }
+    if (theme.wandering) { paintWanderingClock(painter); return; }
+    if (theme.regulator) { paintRegulatorClock(painter); return; }
+    if (theme.wordClock) { paintWordClock(painter);      return; }
+    if (theme.berlinUhr) { paintBerlinUhr(painter);      return; }
 
     float radius = qMin(W, H) * theme.dialRadiusFraction;
     float dialSize = radius * 2.0f + 8.0f * UI_SCALE; // bounding box with margin
@@ -1274,6 +1277,419 @@ void ScreenSaverView::paintDigitalTerminal(QPainter &painter)
         painter.drawLine(QPointF(panel.left(), yy), QPointF(panel.right(), yy));
 
     painter.restore();
+}
+
+// --- VFD: vacuum-fluorescent display (reuses the seven-segment digit) ---
+
+void ScreenSaverView::paintDigitalVFD(QPainter &painter)
+{
+    QTime tm = QTime::currentTime();
+    int hour = tm.hour() % 12; if (hour == 0) hour = 12;
+    QString hh = QString("%1").arg(hour, 2, 10, QChar(' '));   // VFD blanks the leading zero
+    QString mm = QString("%1").arg(tm.minute(), 2, 10, QChar('0'));
+
+    float u = qMin(height() / 400.0f, width() / 1280.0f);
+    float dh = 170.0f * u, dw = 104.0f * u, th = dh * 0.10f;
+    float gap = 26.0f * u, colonW = 46.0f * u;
+    float digitsW = dw * 4 + gap * 2 + colonW;
+    float padX = 56.0f * u, padY = 64.0f * u;
+    float panelW = digitsW + padX * 2;
+    float panelH = dh + padY * 2;
+
+    QPointF tl = placeFloatingBlock(panelW, panelH);
+    QRectF panel(tl.x(), tl.y(), panelW, panelH);
+
+    painter.setRenderHint(QPainter::Antialiasing, true);
+
+    // Smoky glass panel
+    QLinearGradient pg(panel.topLeft(), panel.bottomLeft());
+    pg.setColorAt(0.0, QColor(12, 20, 22));
+    pg.setColorAt(0.5, QColor(10, 16, 18));
+    pg.setColorAt(1.0, QColor(7, 12, 13));
+    painter.setPen(QPen(QColor(80, 120, 120, 70), 2.0f * u));
+    painter.setBrush(pg);
+    painter.drawRoundedRect(panel, 14.0f * u, 14.0f * u);
+
+    QColor teal = m_currentTheme.colors.secondHand.isValid()
+                ? m_currentTheme.colors.secondHand : QColor(52, 231, 200);
+
+    float x = panel.left() + (panelW - digitsW) * 0.5f;
+    float y = panel.center().y() - dh * 0.5f;
+
+    drawSevenSegDigit(painter, x, y, dw, dh, th, hh.at(0).digitValue(), teal); x += dw + gap;
+    drawSevenSegDigit(painter, x, y, dw, dh, th, hh.at(1).digitValue(), teal); x += dw;
+
+    // Colon (blinks)
+    float colonX = x + colonW * 0.5f;
+    x += colonW;
+    if (tm.msec() < 500) {
+        QColor cg = teal; cg.setAlphaF(0.30f);
+        painter.setPen(Qt::NoPen); painter.setBrush(cg);
+        painter.drawEllipse(QPointF(colonX, y + dh * 0.34f), th, th);
+        painter.drawEllipse(QPointF(colonX, y + dh * 0.66f), th, th);
+        painter.setBrush(teal);
+        painter.drawEllipse(QPointF(colonX, y + dh * 0.34f), th * 0.6f, th * 0.6f);
+        painter.drawEllipse(QPointF(colonX, y + dh * 0.66f), th * 0.6f, th * 0.6f);
+    }
+
+    drawSevenSegDigit(painter, x, y, dw, dh, th, mm.at(0).digitValue(), teal); x += dw + gap;
+    drawSevenSegDigit(painter, x, y, dw, dh, th, mm.at(1).digitValue(), teal);
+
+    // AM/PM, upper-right inside the glass
+    QFont lf("DejaVu Sans Mono"); lf.setBold(true);
+    lf.setPixelSize(static_cast<int>(26.0f * u));
+    painter.setFont(lf);
+    painter.setPen(teal);
+    painter.drawText(QRectF(panel.right() - 90.0f * u, panel.top() + 14.0f * u,
+                            76.0f * u, 30.0f * u),
+                     Qt::AlignRight | Qt::AlignVCenter, tm.hour() >= 12 ? "PM" : "AM");
+
+    // Fine wire mesh overlay, clipped to the glass
+    painter.save();
+    QPainterPath clip; clip.addRoundedRect(panel, 14.0f * u, 14.0f * u);
+    painter.setClipPath(clip);
+    painter.setPen(QPen(QColor(120, 180, 170, 13), 1.0f));
+    for (float gx = panel.left(); gx < panel.right(); gx += 7.0f * u)
+        painter.drawLine(QPointF(gx, panel.top()), QPointF(gx, panel.bottom()));
+    for (float gy = panel.top(); gy < panel.bottom(); gy += 7.0f * u)
+        painter.drawLine(QPointF(panel.left(), gy), QPointF(panel.right(), gy));
+    painter.restore();
+}
+
+// --- Wandering Hours: satellite complication ---
+
+void ScreenSaverView::paintWanderingClock(QPainter &painter)
+{
+    const ClockTheme &theme = m_currentTheme;
+    float u = qMin(height() / 400.0f, width() / 1280.0f);
+
+    float blockW = 780.0f * u, blockH = 352.0f * u;
+    QPointF tl = placeFloatingBlock(blockW, blockH);
+    float cx = tl.x() + blockW * 0.5f;
+    float cy = tl.y() + blockH - 54.0f * u;     // carousel pivot near the bottom
+
+    QTime t = QTime::currentTime();
+    int H = t.hour();
+    float mF = t.minute() + (t.second() + t.msec() / 1000.0f) / 60.0f;
+
+    painter.setRenderHint(QPainter::Antialiasing, true);
+
+    const float aR = 250.0f * u;
+    const float a0 = static_cast<float>(M_PI) * 1.12f;
+    const float a1 = static_cast<float>(M_PI) * 1.88f;
+    auto onArc = [&](float ang) { return QPointF(cx + cosf(ang) * aR, cy + sinf(ang) * aR); };
+
+    QColor arcCol = theme.colors.minuteHand;
+    QColor accent = theme.colors.hourHand;
+
+    // Arc baseline
+    QPainterPath arcPath; arcPath.moveTo(onArc(a0));
+    for (int i = 1; i <= 90; i++) arcPath.lineTo(onArc(a0 + (a1 - a0) * i / 90.0f));
+    QColor faint = arcCol; faint.setAlphaF(0.16f);
+    painter.setPen(QPen(faint, 2.0f * u, Qt::SolidLine, Qt::RoundCap));
+    painter.setBrush(Qt::NoBrush);
+    painter.drawPath(arcPath);
+
+    // Minute ticks + labels
+    QFont nf("DejaVu Sans"); nf.setPixelSize(static_cast<int>(15.0f * u));
+    painter.setFont(nf);
+    for (int m = 0; m <= 60; m += 5) {
+        float ang = a0 + (a1 - a0) * (m / 60.0f);
+        float dx = cosf(ang), dy = sinf(ang);
+        QColor tc = arcCol; tc.setAlphaF(0.4f);
+        painter.setPen(QPen(tc, 2.0f * u));
+        painter.drawLine(QPointF(cx + dx * aR, cy + dy * aR),
+                         QPointF(cx + dx * (aR + 12.0f * u), cy + dy * (aR + 12.0f * u)));
+        QColor lc = arcCol; lc.setAlphaF(0.55f);
+        painter.setPen(lc);
+        painter.drawText(QRectF(cx + dx * (aR + 30.0f * u) - 18.0f * u,
+                                cy + dy * (aR + 30.0f * u) - 12.0f * u, 36.0f * u, 24.0f * u),
+                         Qt::AlignCenter, QString::number(m));
+    }
+
+    // Active-minute marker
+    float aAct = a0 + (a1 - a0) * (mF / 60.0f);
+    {
+        QPointF mk = onArc(aAct);
+        QColor g = accent; g.setAlphaF(0.4f);
+        painter.setPen(Qt::NoPen); painter.setBrush(g);
+        painter.drawEllipse(mk, 11.0f * u, 11.0f * u);
+        painter.setBrush(accent);
+        painter.drawEllipse(mk, 6.0f * u, 6.0f * u);
+    }
+
+    // Carousel hub
+    painter.setBrush(QColor(28, 31, 39));
+    painter.setPen(QPen(QColor(160, 170, 190, 64), 2.0f * u));
+    painter.drawEllipse(QPointF(cx, cy), 42.0f * u, 42.0f * u);
+
+    // Three orbiting hour discs
+    int h12 = (H % 12); if (h12 == 0) h12 = 12;
+    struct Disc { int h; float ang; bool on; };
+    Disc discs[3] = {
+        { ((h12 + 10) % 12) + 1, aAct - 0.9f, false },
+        { h12,                   aAct,        true  },
+        { (h12 % 12) + 1,        aAct + 0.9f, false }
+    };
+    const float dr = 185.0f * u, discR = 44.0f * u;
+    QFont df("DejaVu Sans"); df.setBold(true); df.setPixelSize(static_cast<int>(38.0f * u));
+    painter.setFont(df);
+    for (const Disc &d : discs) {
+        float dx = cosf(d.ang), dy = sinf(d.ang);
+        float x = cx + dx * dr, y = cy + dy * dr;
+        QColor arm = QColor(150, 160, 180); arm.setAlphaF(d.on ? 0.5f : 0.12f);
+        painter.setPen(QPen(arm, 3.0f * u)); painter.setBrush(Qt::NoBrush);
+        painter.drawLine(QPointF(cx, cy), QPointF(x, y));
+
+        if (d.on) {
+            QColor glow = accent; glow.setAlphaF(0.5f);
+            painter.setPen(Qt::NoPen); painter.setBrush(glow);
+            painter.drawEllipse(QPointF(x, y), discR + 7.0f * u, discR + 7.0f * u);
+            painter.setBrush(QColor(16, 32, 43));
+            painter.setPen(QPen(accent, 2.5f * u));
+        } else {
+            painter.setBrush(QColor(21, 23, 29));
+            painter.setPen(QPen(QColor(140, 150, 170, 64), 2.0f * u));
+        }
+        painter.drawEllipse(QPointF(x, y), discR, discR);
+        painter.setPen(d.on ? QColor(234, 246, 255) : QColor(160, 170, 190, 110));
+        painter.drawText(QRectF(x - discR, y - discR, discR * 2, discR * 2),
+                         Qt::AlignCenter, QString::number(d.h));
+    }
+}
+
+// --- Regulator: separate H / M / S sub-dials ---
+
+void ScreenSaverView::paintRegulatorClock(QPainter &painter)
+{
+    const ClockTheme &theme = m_currentTheme;
+    float u = qMin(height() / 400.0f, width() / 1280.0f);
+
+    float blockW = 940.0f * u, blockH = 356.0f * u;
+    QPointF tl = placeFloatingBlock(blockW, blockH);
+    float cxc = tl.x() + blockW * 0.5f;
+    float baseY = tl.y() + blockH * 0.46f;
+
+    QTime t = QTime::currentTime();
+    float hours   = (t.hour() % 12) + t.minute() / 60.0f;
+    float minutes = t.minute() + t.second() / 60.0f;
+    float seconds = t.second() + t.msec() / 1000.0f;
+
+    painter.setRenderHint(QPainter::Antialiasing, true);
+
+    auto dial = [&](float cx, float cy, float R, float val, float maxVal,
+                    float handLen, const QString &label, bool big) {
+        QRadialGradient fg(cx, cy - R * 0.3f, R);
+        fg.setColorAt(0.0, QColor(27, 32, 41));
+        fg.setColorAt(1.0, QColor(14, 17, 22));
+        painter.setBrush(fg);
+        painter.setPen(QPen(QColor(190, 200, 220, 46), 2.0f * u));
+        painter.drawEllipse(QPointF(cx, cy), R, R);
+
+        int ticks = (maxVal == 12.0f) ? 12 : 60;
+        for (int i = 0; i < ticks; i++) {
+            float a = -static_cast<float>(M_PI) / 2 + 2.0f * static_cast<float>(M_PI) * i / ticks;
+            bool maj = (ticks == 12) ? true : (i % 5 == 0);
+            float r1 = maj ? R - 14.0f * u : R - 8.0f * u, r2 = R - 3.0f * u;
+            QColor tc = maj ? QColor(220, 228, 240, 178) : QColor(180, 190, 205, 76);
+            painter.setPen(QPen(tc, maj ? 2.5f * u : 1.2f * u));
+            painter.drawLine(QPointF(cx + cosf(a) * r1, cy + sinf(a) * r1),
+                             QPointF(cx + cosf(a) * r2, cy + sinf(a) * r2));
+        }
+
+        if (maxVal == 12.0f) {
+            QFont nf("Georgia"); nf.setBold(true); nf.setPixelSize(static_cast<int>(18.0f * u));
+            painter.setFont(nf); painter.setPen(QColor(225, 232, 245, 217));
+            for (int n = 1; n <= 12; n++) {
+                float a = -static_cast<float>(M_PI) / 2 + 2.0f * static_cast<float>(M_PI) * n / 12.0f;
+                painter.drawText(QRectF(cx + cosf(a) * (R - 30.0f * u) - 14.0f * u,
+                                        cy + sinf(a) * (R - 30.0f * u) - 12.0f * u,
+                                        28.0f * u, 24.0f * u),
+                                 Qt::AlignCenter, QString::number(n));
+            }
+        }
+
+        float a = -static_cast<float>(M_PI) / 2 + 2.0f * static_cast<float>(M_PI) * (val / maxVal);
+        QColor hc = big ? theme.colors.minuteHand : theme.colors.hourHand;
+        painter.setPen(QPen(hc, big ? 5.0f * u : 3.0f * u, Qt::SolidLine, Qt::RoundCap));
+        painter.drawLine(QPointF(cx - cosf(a) * R * 0.14f, cy - sinf(a) * R * 0.14f),
+                         QPointF(cx + cosf(a) * handLen, cy + sinf(a) * handLen));
+        painter.setPen(Qt::NoPen); painter.setBrush(theme.colors.centerPin);
+        painter.drawEllipse(QPointF(cx, cy), big ? 7.0f * u : 5.0f * u, big ? 7.0f * u : 5.0f * u);
+
+        QFont lf("DejaVu Sans"); lf.setPixelSize(static_cast<int>(13.0f * u));
+        painter.setFont(lf); painter.setPen(QColor(150, 160, 178, 204));
+        painter.drawText(QRectF(cx - R, cy + R + 8.0f * u, R * 2, 20.0f * u),
+                         Qt::AlignHCenter | Qt::AlignTop, label);
+    };
+
+    dial(cxc - 330.0f * u, baseY, 110.0f * u, hours,   12.0f, 86.0f * u,  "HOURS",   false);
+    dial(cxc,              baseY, 145.0f * u, minutes, 60.0f, 115.0f * u, "MINUTES", true);
+    dial(cxc + 330.0f * u, baseY, 110.0f * u, seconds, 60.0f, 86.0f * u,  "SECONDS", false);
+}
+
+// --- Word Clock: QLOCKTWO-style letter matrix ---
+
+static const char *const WORD_GRID[10] = {
+    "ITLISASAMPM", "ACQUARTERDC", "TWENTYFIVEX", "HALFBTENFTO", "PASTERUNINE",
+    "ONESIXTHREE", "FOURFIVETWO", "EIGHTELEVEN", "SEVENTWELVE", "TENSEOCLOCK"
+};
+
+static QSet<int> wordClockLitCells(int hour24, int minute)
+{
+    const int C = 11;
+    QSet<int> s;
+    auto add = [&](int r, int c0, int c1) { for (int c = c0; c <= c1; c++) s.insert(r * C + c); };
+    add(0, 0, 1); add(0, 3, 4);                       // IT IS
+
+    int mm = (minute + 2) / 5, hh = hour24;
+    if (mm == 12) { mm = 0; hh = hour24 + 1; }
+    int m5 = mm * 5;
+    bool toCase = m5 > 30;
+    int dh = (toCase ? hh + 1 : hh) % 12; if (dh == 0) dh = 12;
+
+    switch (m5) {
+    case 5:  add(2, 6, 9); add(4, 0, 3); break;                 // FIVE PAST
+    case 10: add(3, 5, 7); add(4, 0, 3); break;                 // TEN PAST
+    case 15: add(1, 2, 8); add(4, 0, 3); break;                 // QUARTER PAST
+    case 20: add(2, 0, 5); add(4, 0, 3); break;                 // TWENTY PAST
+    case 25: add(2, 0, 5); add(2, 6, 9); add(4, 0, 3); break;   // TWENTY FIVE PAST
+    case 30: add(3, 0, 3); add(4, 0, 3); break;                 // HALF PAST
+    case 35: add(2, 0, 5); add(2, 6, 9); add(3, 9, 10); break;  // TWENTY FIVE TO
+    case 40: add(2, 0, 5); add(3, 9, 10); break;                // TWENTY TO
+    case 45: add(1, 2, 8); add(3, 9, 10); break;                // QUARTER TO
+    case 50: add(3, 5, 7); add(3, 9, 10); break;                // TEN TO
+    case 55: add(2, 6, 9); add(3, 9, 10); break;                // FIVE TO
+    default: break;                                             // :00 -> O'CLOCK
+    }
+
+    switch (dh) {
+    case 1:  add(5, 0, 2);  break;  case 2:  add(6, 8, 10); break;
+    case 3:  add(5, 6, 10); break;  case 4:  add(6, 0, 3);  break;
+    case 5:  add(6, 4, 7);  break;  case 6:  add(5, 3, 5);  break;
+    case 7:  add(8, 0, 4);  break;  case 8:  add(7, 0, 4);  break;
+    case 9:  add(4, 7, 10); break;  case 10: add(9, 0, 2);  break;
+    case 11: add(7, 5, 10); break;  case 12: add(8, 5, 10); break;
+    }
+    if (m5 == 0) add(9, 5, 10);     // O'CLOCK
+    return s;
+}
+
+void ScreenSaverView::paintWordClock(QPainter &painter)
+{
+    const ClockTheme &theme = m_currentTheme;
+    float u = qMin(height() / 400.0f, width() / 1280.0f);
+
+    const int cols = 11, rows = 10;
+    float cw = 44.0f * u, ch = 34.0f * u, pad = 20.0f * u;
+    float gridW = cols * cw, gridH = rows * ch;
+
+    QPointF tl = placeFloatingBlock(gridW + pad * 2, gridH + pad * 2);
+    float gx = tl.x() + pad, gy = tl.y() + pad;
+
+    QTime t = QTime::currentTime();
+    QSet<int> lit = wordClockLitCells(t.hour(), t.minute());
+
+    QFont f("DejaVu Sans Mono"); f.setBold(true); f.setPixelSize(static_cast<int>(29.0f * u));
+    painter.setFont(f);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+
+    QColor litCol  = theme.colors.numerals;
+    QColor dimCol  = theme.colors.ticks;  dimCol.setAlphaF(0.30f);
+    QColor glowCol = theme.colors.secondHand.isValid() ? theme.colors.secondHand : QColor(120, 200, 255);
+    QFontMetricsF fm(f);
+
+    for (int r = 0; r < rows; r++) {
+        for (int c = 0; c < cols; c++) {
+            QString ch1(QChar(WORD_GRID[r][c]));
+            QRectF cell(gx + c * cw, gy + r * ch, cw, ch);
+            if (lit.contains(r * cols + c)) {
+                float bx = cell.center().x() - fm.horizontalAdvance(ch1) * 0.5f;
+                float by = cell.center().y() + (fm.ascent() - fm.descent()) * 0.5f;
+                QPainterPath path; path.addText(bx, by, f, ch1);
+                QColor g1 = glowCol; g1.setAlphaF(0.35f);
+                painter.setPen(QPen(g1, 5.0f * u, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+                painter.setBrush(Qt::NoBrush); painter.drawPath(path);
+                QColor g2 = glowCol; g2.setAlphaF(0.5f);
+                painter.setPen(QPen(g2, 2.0f * u, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+                painter.drawPath(path);
+                painter.setPen(Qt::NoPen); painter.setBrush(litCol); painter.drawPath(path);
+            } else {
+                painter.setPen(dimCol);
+                painter.drawText(cell, Qt::AlignCenter, ch1);
+            }
+        }
+    }
+}
+
+// --- Berlin Uhr: Mengenlehreuhr set-theory lamp clock ---
+
+void ScreenSaverView::paintBerlinUhr(QPainter &painter)
+{
+    float u = qMin(height() / 400.0f, width() / 1280.0f);
+
+    float blockW = 1120.0f * u, blockH = 352.0f * u;
+    QPointF tl = placeFloatingBlock(blockW, blockH);
+    float cx = tl.x() + blockW * 0.5f, top = tl.y();
+
+    QTime tm = QTime::currentTime();
+    int H = tm.hour(), M = tm.minute(), S = tm.second();
+
+    painter.setRenderHint(QPainter::Antialiasing, true);
+
+    const QColor red(255, 59, 48),  redOff(58, 20, 18);
+    const QColor yel(255, 214, 10), yelOff(58, 52, 16);
+    const float lampH = 56.0f * u;
+
+    auto lamp = [&](float x, float y, float w, bool on, const QColor &col, const QColor &off) {
+        QRectF rc(x, y, w, lampH);
+        if (on) {  // soft glow halo behind the lit lamp
+            QColor g = col; g.setAlphaF(0.30f);
+            painter.setPen(Qt::NoPen); painter.setBrush(g);
+            painter.drawRoundedRect(rc.adjusted(-5.0f * u, -5.0f * u, 5.0f * u, 5.0f * u),
+                                    8.0f * u, 8.0f * u);
+        }
+        painter.setBrush(on ? col : off);
+        painter.setPen(QPen(QColor(0, 0, 0, 128), 1.5f * u));
+        painter.drawRoundedRect(rc, 5.0f * u, 5.0f * u);
+    };
+
+    // Seconds lamp (round, blinks each second)
+    {
+        float r = 22.0f * u, y = top + 40.0f * u;
+        bool on = (S % 2 == 0);
+        if (on) {
+            QColor g = yel; g.setAlphaF(0.30f);
+            painter.setPen(Qt::NoPen); painter.setBrush(g);
+            painter.drawEllipse(QPointF(cx, y), r + 5.0f * u, r + 5.0f * u);
+        }
+        painter.setBrush(on ? yel : yelOff);
+        painter.setPen(QPen(QColor(0, 0, 0, 128), 1.5f * u));
+        painter.drawEllipse(QPointF(cx, y), r, r);
+    }
+
+    float innerW = 1060.0f * u, x0 = cx - innerW * 0.5f;
+    int h5 = H / 5, h1 = H % 5, m5 = M / 5, m1 = M % 5;
+
+    auto row4 = [&](int litN, float y, const QColor &col, const QColor &off) {
+        float gap = 10.0f * u, w = (innerW - gap * 3) / 4;
+        for (int i = 0; i < 4; i++)
+            lamp(x0 + i * (w + gap), y, w, i < litN, col, off);
+    };
+
+    row4(h5, top + 80.0f * u,  red, redOff);    // 5-hour lamps
+    row4(h1, top + 146.0f * u, red, redOff);    // 1-hour lamps
+
+    // 5-minute row: 11 lamps, quarters (3rd, 6th, 9th) are red
+    {
+        float gap = 8.0f * u, w = (innerW - gap * 10) / 11, y = top + 212.0f * u;
+        for (int i = 0; i < 11; i++) {
+            bool q = ((i + 1) % 3 == 0);
+            lamp(x0 + i * (w + gap), y, w, i < m5, q ? red : yel, q ? redOff : yelOff);
+        }
+    }
+
+    row4(m1, top + 278.0f * u, yel, yelOff);    // 1-minute lamps
 }
 
 void ScreenSaverView::mousePressEvent(QMouseEvent *event)

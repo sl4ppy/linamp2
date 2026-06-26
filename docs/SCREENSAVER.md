@@ -2,7 +2,7 @@
 
 ## Overview
 
-The screensaver activates after 5 minutes of idle time (no playback and no user interaction). It randomly selects one of 15 themed clock faces each time it activates: 10 analog dials and 5 digital styles. All faces float and bounce around the screen to prevent burn-in. Any mouse click, key press, or music playback immediately deactivates it.
+The screensaver activates after 5 minutes of idle time (no playback and no user interaction). It randomly selects one of 20 themed clock faces each time it activates: 12 analog dials, 6 digital styles, and 2 spatial/lamp faces. All faces float and bounce around the screen to prevent burn-in. Any mouse click, key press, or music playback immediately deactivates it.
 
 ![Digital clock screensaver](../screenshots/screensaver-digital.png)
 
@@ -24,6 +24,10 @@ All analog themes render a circular watch dial that bounces around the screen. E
 | **Mondaine** | Signage white | Bold black baton hour+minute | Bold black hour bars, thin minute lines | Iconic red disc-tipped ("lollipop") second hand, Swiss-railway look |
 | **Orbital** | Dark blue-black | None — hands-free | Faint concentric guide rings | Glowing hour/minute/second arc trails sweeping clockwise from 12, center digital readout |
 | **Guilloché** | Emerald radial gradient | Gold dauphine hour+minute, gold needle second | Gold applied rect indices | Radial sunburst dial texture, gold rim and center |
+| **Wandering Hours** | Dark, wide minute arc | None — orbiting hour discs | Minute arc 0–60 across the panel | Urwerk/AP satellite complication: the active hour disc sweeps the arc; two neighbour discs ride the carousel dimmed |
+| **Regulator** | Three sub-dials | Separate H / M / S hands (gold center minute) | Per-dial major/minor ticks, Arabic on the hour dial | Hours · Minutes · Seconds laid side-by-side across the full width |
+
+**Special wide-panel renders:** the **Wandering Hours** face (`wandering` flag) skips the dial pipeline and draws a carousel of three hour discs on a wide minute arc; the **Regulator** face (`regulator` flag) draws three independent sub-dials spanning the 1280-px width.
 
 **Hand shapes** (`HandShape` enum): Tapered, Sword, Mercedes (circle cutout), Dauphine (diamond cross-section), Needle, Breguet (moon-hole), Alpha/Leaf (sinusoidal bulge), Baton (flat rectangle).
 
@@ -44,6 +48,16 @@ Digital faces all bounce off the screen edges like a DVD screensaver. The style 
 | **Split Flap** | Charcoal Solari flip tiles with a center seam, axle notches and condensed white numerals (HOURS / MINUTES / SECONDS) |
 | **Nixie** | Four glass tubes with warm orange glow cathodes, faint caged "8" ghost digits, end caps and neon colon dots |
 | **Terminal** | Phosphor-green CRT console panel — prompt, large time, date and a blinking cursor block over scanlines |
+| **VFD** | Vacuum-fluorescent display — teal seven-segment digits with dim ghost segments behind smoky glass, a fine wire mesh overlay, blinking colon and AM/PM. Reuses the seven-segment digit renderer in teal. |
+
+### Spatial / Lamp Faces
+
+These two faces encode the time without hands or a digit readout. Both are routed through `paintAnalogClock()` via their own flags (like Orbital/Guilloché) and use `placeFloatingBlock()` to drift.
+
+| Face | Look |
+|-------|------|
+| **Word Clock** | QLOCKTWO-style 11×10 letter matrix. The current time is spelled out in glowing words (`IT IS · TEN · PAST · TEN`) over a dim field of unlit letters; updates on the 5-minute boundary. `wordClockLitCells()` maps hour/minute to the lit cell set. |
+| **Berlin Uhr** | Mengenlehreuhr / set-theory lamp clock (Dieter Binninger, 1975). A blinking seconds lamp over four rows of red/yellow lamps: 5-hour, 1-hour, 5-minute (quarters in red), 1-minute. |
 
 The original Neon style renders with 3-layer glow via QPainterPath strokes (outer wide/low-alpha, mid medium, core narrow white-tinted fill). Fonts: DejaVu Sans Mono for time (44px * UI_SCALE), DejaVu Sans for AM/PM (18px) and date (13px).
 
@@ -110,4 +124,4 @@ The analog clock is optimized for Raspberry Pi 4:
 2. Run: `./start.sh`
 3. Wait for idle timeout (or temporarily reduce `SCREENSAVER_TIMEOUT_MS` for testing)
 4. Dismiss (click or keypress), wait again — will get a different random theme
-5. 15 possible themes — analog: Luxury, Aviator, Diver, Minimalist, Chronograph, Neon Retro, Bauhaus, Mondaine, Orbital, Guilloché; digital: Neon, Seven Segment, Split Flap, Nixie, Terminal
+5. 20 possible themes — analog: Luxury, Aviator, Diver, Minimalist, Chronograph, Neon Retro, Bauhaus, Mondaine, Orbital, Guilloché, Wandering Hours, Regulator; digital: Neon, Seven Segment, Split Flap, Nixie, Terminal, VFD; spatial/lamp: Word Clock, Berlin Uhr
