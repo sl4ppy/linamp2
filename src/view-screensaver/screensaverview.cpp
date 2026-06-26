@@ -1363,10 +1363,10 @@ void ScreenSaverView::paintWanderingClock(QPainter &painter)
     const ClockTheme &theme = m_currentTheme;
     float u = qMin(height() / 400.0f, width() / 1280.0f);
 
-    float blockW = 780.0f * u, blockH = 352.0f * u;
+    float blockW = 720.0f * u, blockH = 344.0f * u;
     QPointF tl = placeFloatingBlock(blockW, blockH);
     float cx = tl.x() + blockW * 0.5f;
-    float cy = tl.y() + blockH - 54.0f * u;     // carousel pivot near the bottom
+    float cy = tl.y() + blockH * 0.57f;          // carousel pivot, with the arc overhead
 
     QTime t = QTime::currentTime();
     int H = t.hour();
@@ -1374,7 +1374,7 @@ void ScreenSaverView::paintWanderingClock(QPainter &painter)
 
     painter.setRenderHint(QPainter::Antialiasing, true);
 
-    const float aR = 250.0f * u;
+    const float aR = 160.0f * u;
     const float a0 = static_cast<float>(M_PI) * 1.12f;
     const float a1 = static_cast<float>(M_PI) * 1.88f;
     auto onArc = [&](float ang) { return QPointF(cx + cosf(ang) * aR, cy + sinf(ang) * aR); };
@@ -1382,7 +1382,7 @@ void ScreenSaverView::paintWanderingClock(QPainter &painter)
     QColor arcCol = theme.colors.minuteHand;
     QColor accent = theme.colors.hourHand;
 
-    // Arc baseline
+    // Arc baseline (minute scale, overhead)
     QPainterPath arcPath; arcPath.moveTo(onArc(a0));
     for (int i = 1; i <= 90; i++) arcPath.lineTo(onArc(a0 + (a1 - a0) * i / 90.0f));
     QColor faint = arcCol; faint.setAlphaF(0.16f);
@@ -1391,7 +1391,7 @@ void ScreenSaverView::paintWanderingClock(QPainter &painter)
     painter.drawPath(arcPath);
 
     // Minute ticks + labels
-    QFont nf("DejaVu Sans"); nf.setPixelSize(static_cast<int>(15.0f * u));
+    QFont nf("DejaVu Sans"); nf.setPixelSize(static_cast<int>(14.0f * u));
     painter.setFont(nf);
     for (int m = 0; m <= 60; m += 5) {
         float ang = a0 + (a1 - a0) * (m / 60.0f);
@@ -1399,40 +1399,41 @@ void ScreenSaverView::paintWanderingClock(QPainter &painter)
         QColor tc = arcCol; tc.setAlphaF(0.4f);
         painter.setPen(QPen(tc, 2.0f * u));
         painter.drawLine(QPointF(cx + dx * aR, cy + dy * aR),
-                         QPointF(cx + dx * (aR + 12.0f * u), cy + dy * (aR + 12.0f * u)));
+                         QPointF(cx + dx * (aR + 11.0f * u), cy + dy * (aR + 11.0f * u)));
         QColor lc = arcCol; lc.setAlphaF(0.55f);
         painter.setPen(lc);
-        painter.drawText(QRectF(cx + dx * (aR + 30.0f * u) - 18.0f * u,
-                                cy + dy * (aR + 30.0f * u) - 12.0f * u, 36.0f * u, 24.0f * u),
+        painter.drawText(QRectF(cx + dx * (aR + 24.0f * u) - 17.0f * u,
+                                cy + dy * (aR + 24.0f * u) - 11.0f * u, 34.0f * u, 22.0f * u),
                          Qt::AlignCenter, QString::number(m));
     }
 
-    // Active-minute marker
+    // Active-minute marker (just outside the disc, on the scale)
     float aAct = a0 + (a1 - a0) * (mF / 60.0f);
     {
         QPointF mk = onArc(aAct);
         QColor g = accent; g.setAlphaF(0.4f);
         painter.setPen(Qt::NoPen); painter.setBrush(g);
-        painter.drawEllipse(mk, 11.0f * u, 11.0f * u);
+        painter.drawEllipse(mk, 9.0f * u, 9.0f * u);
         painter.setBrush(accent);
-        painter.drawEllipse(mk, 6.0f * u, 6.0f * u);
+        painter.drawEllipse(mk, 5.0f * u, 5.0f * u);
     }
+
+    // Three hour discs on the carousel (active rides just under the active minute)
+    int h12 = (H % 12); if (h12 == 0) h12 = 12;
+    struct Disc { int h; float ang; bool on; };
+    Disc discs[3] = {
+        { ((h12 + 10) % 12) + 1, aAct - 0.72f, false },
+        { h12,                   aAct,         true  },
+        { (h12 % 12) + 1,        aAct + 0.72f, false }
+    };
+    const float dr = 116.0f * u, discR = 38.0f * u;
 
     // Carousel hub
     painter.setBrush(QColor(28, 31, 39));
     painter.setPen(QPen(QColor(160, 170, 190, 64), 2.0f * u));
-    painter.drawEllipse(QPointF(cx, cy), 42.0f * u, 42.0f * u);
+    painter.drawEllipse(QPointF(cx, cy), 34.0f * u, 34.0f * u);
 
-    // Three orbiting hour discs
-    int h12 = (H % 12); if (h12 == 0) h12 = 12;
-    struct Disc { int h; float ang; bool on; };
-    Disc discs[3] = {
-        { ((h12 + 10) % 12) + 1, aAct - 0.9f, false },
-        { h12,                   aAct,        true  },
-        { (h12 % 12) + 1,        aAct + 0.9f, false }
-    };
-    const float dr = 185.0f * u, discR = 44.0f * u;
-    QFont df("DejaVu Sans"); df.setBold(true); df.setPixelSize(static_cast<int>(38.0f * u));
+    QFont df("DejaVu Sans"); df.setBold(true); df.setPixelSize(static_cast<int>(31.0f * u));
     painter.setFont(df);
     for (const Disc &d : discs) {
         float dx = cosf(d.ang), dy = sinf(d.ang);
@@ -1444,7 +1445,7 @@ void ScreenSaverView::paintWanderingClock(QPainter &painter)
         if (d.on) {
             QColor glow = accent; glow.setAlphaF(0.5f);
             painter.setPen(Qt::NoPen); painter.setBrush(glow);
-            painter.drawEllipse(QPointF(x, y), discR + 7.0f * u, discR + 7.0f * u);
+            painter.drawEllipse(QPointF(x, y), discR + 6.0f * u, discR + 6.0f * u);
             painter.setBrush(QColor(16, 32, 43));
             painter.setPen(QPen(accent, 2.5f * u));
         } else {
