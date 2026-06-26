@@ -35,12 +35,18 @@ The device serves its own responsive web interface (default `http://<linamp-ip>:
 
 ![Player view with active playback](screenshots/player-playing.png)
 
-A few of the digital screensaver clock faces (shown on the device's 1280×400 display):
+A few of the screensaver clock faces (shown on the device's 1280×400 display):
 
 | | |
 |---|---|
 | ![Split-flap clock](screenshots/clock-splitflap.png) | ![Terminal clock](screenshots/clock-terminal.png) |
 | Split-flap (Solari) with hours/minutes/seconds | Terminal / CRT |
+| ![VFD clock](screenshots/clock-vfd.png) | ![Word Clock](screenshots/clock-wordclock.png) |
+| VFD — 80s hi-fi vacuum-fluorescent display | Word Clock — QLOCKTWO-style letter matrix |
+| ![Wandering Hours clock](screenshots/clock-wandering.png) | ![Regulator clock](screenshots/clock-regulator.png) |
+| Wandering Hours — Urwerk-style satellite complication | Regulator — separate H · M · S sub-dials |
+| ![Berlin Uhr clock](screenshots/clock-berlin.png) | |
+| Berlin Uhr — Mengenlehreuhr set-theory lamp clock | |
 
 ## Features
 
