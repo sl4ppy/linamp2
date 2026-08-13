@@ -26,6 +26,8 @@ function applyStatus(s) {
   $("repeat").classList.toggle("on", !!s.repeat);
   durationMs = s.durationMs || 0;
   $("dur").textContent = fmt(durationMs);
+  // Seeking needs a known duration to map slider position -> ms
+  $("seek").disabled = !durationMs;
   if (!seeking) {
     $("pos").textContent = fmt(s.positionMs || 0);
     $("seek").value = durationMs ? Math.round((s.positionMs || 0) / durationMs * 1000) : 0;

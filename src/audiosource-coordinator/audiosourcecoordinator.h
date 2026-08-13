@@ -15,6 +15,7 @@ public:
 
     void addSource(AudioSource *source, QString label, bool activate = false);
 
+    AudioSource *activeSource() const;
     int currentVolume() const;
     int currentBalance() const;
     QString currentSourceLabel() const;
@@ -41,7 +42,6 @@ public slots:
     void repeat();
 
 private:
-    AudioSource *activeSource() const;
     QList<AudioSource*> sources;
     QList<QString> sourceLabels;
     int currentSource = -1;
