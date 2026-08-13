@@ -30,6 +30,7 @@ private:
 
     void loadSettings();
     void saveSettings();
+    void killStaleEmitters();
 };
 
 #endif // VBANSENDER_H
