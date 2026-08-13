@@ -7,6 +7,8 @@
 #include <QTimer>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QSet>
+#include <QUrl>
 #include "audiosourcecd.h"
 #include "audiosourcecoordinator.h"
 #include "audiosourcefile.h"
@@ -95,6 +97,8 @@ private:
     PlaylistModel *m_playlistModel = nullptr;
     QString m_musicRoot;
     bool resolveSandboxed(const QString &rel, QString &outAbs) const;
+    void collectAudioFiles(const QString &absDir, QList<QUrl> &urls,
+                           QSet<QString> &visited, int depth) const;
     QProcess *shutdownProcess = nullptr;
     void shutdown();
 

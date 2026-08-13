@@ -156,22 +156,39 @@ async function browse(path) {
     const name = document.createElement("span"); name.textContent = e.name;
     name.style.cssText = "flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
     li.append(ico, name);
-    if (e.type === "dir") {
-      li.onclick = () => browse(e.path);
-    } else {
-      const add = document.createElement("span"); add.className = "add"; add.textContent = "+ add";
-      add.onclick = (ev) => { ev.stopPropagation();
-        call("/api/add?path=" + encodeURIComponent(e.path)).then(() => { add.textContent = "added"; }); };
-      li.appendChild(add);
-    }
+    const add = document.createElement("span"); add.className = "add"; add.textContent = "+ add";
+    // Directory adds recurse, so the click must not also navigate into the folder.
+    add.onclick = (ev) => { ev.stopPropagation(); addPath(e.path, add); };
+    li.appendChild(add);
+    if (e.type === "dir") li.onclick = () => browse(e.path);
     ul.appendChild(li);
   }
+}
+
+// Shared by the per-row buttons and "Add folder"; a big recursive add over the
+// network share is slow, so the button reports progress and the outcome.
+async function addPath(path, btn) {
+  const label = btn.textContent;
+  btn.textContent = "adding…";
+  let data;
+  try {
+    data = await (await fetch("/api/add?path=" + encodeURIComponent(path) +
+      tokenQS().replace("?", "&"))).json();
+  } catch { btn.textContent = "failed"; setTimeout(() => (btn.textContent = label), 2000); return; }
+  if (!data.ok) {
+    btn.textContent = data.error === "no audio files" ? "no tracks" : "failed";
+    setTimeout(() => (btn.textContent = label), 2000);
+    return;
+  }
+  btn.textContent = "+" + data.added + (data.truncated ? " (max)" : "");
+  if (activeTab === "playlist") loadPlaylist();
 }
 $("fb-up").onclick = () => {
   if (!fbPath) return;
   const parent = fbPath.includes("/") ? fbPath.slice(0, fbPath.lastIndexOf("/")) : "";
   browse(parent);
 };
+$("fb-addall").onclick = () => addPath(fbPath, $("fb-addall"));
 
 // refresh the playlist highlight when the track changes (status events)
 window.addEventListener("linamp-status", () => { if (activeTab === "playlist") loadPlaylist(); });

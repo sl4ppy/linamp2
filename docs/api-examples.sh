@@ -22,9 +22,17 @@ check "/api/volume?level=50"      200
 check "/api/balance?value=0"      200
 check "/api/clock?face=Nixie"     200
 check "/api/screensaver/off"      200
-check "/api/volume?level=999"     400
-check "/api/clock?face=Nope"      400
-check "/api/nope"                 404
+check "/api/browse?path="          200
+check "/api/volume?level=999"      400
+check "/api/clock?face=Nope"       400
+check "/api/nope"                  404
+
+# Sandbox guards. These must stay 400 even though containment is checked
+# lexically so that symlinks inside musicRoot keep working.
+check "/api/browse?path=.."             400
+check "/api/browse?path=/etc"           400
+check "/api/browse?path=../../../etc"   400
+check "/api/add?path=.."                400
 
 if [ "$fails" -gt 0 ]; then
   echo "FAILED: $fails check(s) failed"
