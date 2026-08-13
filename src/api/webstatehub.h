@@ -11,8 +11,10 @@ class AudioSource;
 class AudioSourceCoordinator;
 
 // Aggregates the live player state the web UI mirrors. Connects to all sources
-// (inactive sources don't emit) plus the coordinator, and holds the current
-// snapshot. Emits stateChanged() on any non-position change, positionChanged()
+// plus the coordinator, and holds the current snapshot. Inactive sources still
+// emit reset signals (stopped / duration 0 / position 0) while they poll or get
+// deactivated, so every source slot ignores anything not sent by the active
+// source. Emits stateChanged() on any non-position change, positionChanged()
 // on playback position updates.
 class WebStateHub : public QObject
 {
@@ -46,6 +48,9 @@ private slots:
     void onSourceChanged(int index);
 
 private:
+    // True when the signal being handled came from the coordinator's active source
+    bool fromActiveSource() const;
+
     AudioSourceCoordinator *m_coord;
 
     QString m_state = "stopped";

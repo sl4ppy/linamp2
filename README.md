@@ -373,3 +373,40 @@ linamp2/
 - https://github.com/qt/qtmultimedia/blob/4fafcd6d2c164472ce63d5f09614b7e073c74bea/src/spatialaudio/qaudioengine.cpp
 - https://github.com/audacious-media-player/audacious-plugins/blob/master/src/qt-spectrum/qt-spectrum.cc
 - https://github.com/captbaritone/webamp/blob/master/packages/webamp/js/components/Visualizer.tsx
+
+## Credits and License
+
+### Original project
+
+This project is a fork of **Linamp**, created by **Rodrigo Méndez**:
+
+- Upstream repository: https://github.com/Rodmg/linamp
+- Copyright (C) 2024 Rodrigo Méndez &lt;rodrigo@linamp.org&gt;
+- Debian packaging originally contributed by Taneli Leppä &lt;rosmo@rosmo.fi&gt;
+
+All credit for the original player — the Winamp-inspired UI, the pluggable audio
+source architecture, the CD/Bluetooth/Spotify Python backends and the embedded
+hardware design — belongs to the upstream authors.
+
+### This fork
+
+**[sl4ppy/linamp2](https://github.com/sl4ppy/linamp2)** is a modified version of the
+above, maintained by Chris Van Doren. It is not endorsed by or affiliated with the
+upstream project. Changes made in this fork include the VBAN network audio sender,
+the Geiss and AVS visualizers, the clock-face screensaver, DPI-scalable UI
+stylesheets, the HTTP API and the embedded web remote; see the git history for the
+complete record of modifications.
+
+### License
+
+Linamp and this fork are licensed under the **GNU General Public License v3.0**.
+See [LICENSE](LICENSE) for the full text.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+Bundled third-party software is listed with its respective licenses in
+[LICENSE-3RD-PARTY.md](LICENSE-3RD-PARTY.md). The Geiss visualizer is a
+reimplementation inspired by Ryan Geiss's 1998 Winamp plugin
+([source](https://github.com/geissomatik/geiss), BSD-3).

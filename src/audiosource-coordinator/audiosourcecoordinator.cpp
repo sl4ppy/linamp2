@@ -89,6 +89,8 @@ void AudioSourceCoordinator::setSource(int newSource)
 
     // activate new source
     sources[currentSource]->activate();
+
+    emit sourceChanged(currentSource);
 }
 
 void AudioSourceCoordinator::setVolume(int volume)

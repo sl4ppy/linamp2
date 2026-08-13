@@ -66,8 +66,14 @@ void WebStateHub::setView(const QString &view)
     emit stateChanged();
 }
 
+bool WebStateHub::fromActiveSource() const
+{
+    return sender() && sender() == m_coord->activeSource();
+}
+
 void WebStateHub::onPlaybackState(MediaPlayer::PlaybackState s)
 {
+    if (!fromActiveSource()) return;
     const QString ns = stateString(s);
     if (ns == m_state) return;
     m_state = ns;
@@ -76,6 +82,7 @@ void WebStateHub::onPlaybackState(MediaPlayer::PlaybackState s)
 
 void WebStateHub::onMetadata(const QMediaMetaData &md)
 {
+    if (!fromActiveSource()) return;
     m_artist = md.value(QMediaMetaData::AlbumArtist).toString();
     m_album  = md.value(QMediaMetaData::AlbumTitle).toString();
     m_title  = md.value(QMediaMetaData::Title).toString();
@@ -95,6 +102,7 @@ void WebStateHub::onMetadata(const QMediaMetaData &md)
 
 void WebStateHub::onDuration(qint64 ms)
 {
+    if (!fromActiveSource()) return;
     if (ms == m_durationMs) return;
     m_durationMs = ms;
     emit stateChanged();
@@ -102,12 +110,14 @@ void WebStateHub::onDuration(qint64 ms)
 
 void WebStateHub::onPosition(qint64 ms)
 {
+    if (!fromActiveSource()) return;
     m_positionMs = ms;
     emit positionChanged(ms);
 }
 
 void WebStateHub::onFormat(const QByteArray &, QAudioFormat format)
 {
+    if (!fromActiveSource()) return;
     bool changed = false;
     if (format.channelCount() > 0 && format.channelCount() != m_channels) {
         m_channels = format.channelCount();
@@ -122,10 +132,10 @@ void WebStateHub::onFormat(const QByteArray &, QAudioFormat format)
 
 void WebStateHub::onVolume(int v)   { if (v != m_volume)  { m_volume = v;  emit stateChanged(); } }
 void WebStateHub::onBalance(int b)  { if (b != m_balance) { m_balance = b; emit stateChanged(); } }
-void WebStateHub::onEq(bool e)      { if (e != m_eq)      { m_eq = e;      emit stateChanged(); } }
-void WebStateHub::onPl(bool p)      { if (p != m_pl)      { m_pl = p;      emit stateChanged(); } }
-void WebStateHub::onShuffle(bool s) { if (s != m_shuffle) { m_shuffle = s; emit stateChanged(); } }
-void WebStateHub::onRepeat(bool r)  { if (r != m_repeat)  { m_repeat = r;  emit stateChanged(); } }
+void WebStateHub::onEq(bool e)      { if (fromActiveSource() && e != m_eq)      { m_eq = e;      emit stateChanged(); } }
+void WebStateHub::onPl(bool p)      { if (fromActiveSource() && p != m_pl)      { m_pl = p;      emit stateChanged(); } }
+void WebStateHub::onShuffle(bool s) { if (fromActiveSource() && s != m_shuffle) { m_shuffle = s; emit stateChanged(); } }
+void WebStateHub::onRepeat(bool r)  { if (fromActiveSource() && r != m_repeat)  { m_repeat = r;  emit stateChanged(); } }
 
 void WebStateHub::onSourceChanged(int)
 {
