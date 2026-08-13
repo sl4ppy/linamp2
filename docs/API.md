@@ -48,9 +48,20 @@ Base URL: `http://<linamp-ip>:8080`
 | GET | `/api/playlist/remove?index=N` | remove item N |
 | GET | `/api/playlist/clear` | empty the queue |
 | GET | `/api/browse?path=REL` | list a directory under `musicRoot` (sandboxed; audio files + folders). `{ok,path,entries:[{name,type,path,size?}]}` |
-| GET | `/api/add?path=REL` | add an audio file (or all audio in a folder) to the queue. `{ok,added}` |
+| GET | `/api/add?path=REL` | add a file, or a whole folder **recursively**, to the queue. `{ok,added,truncated?}` |
 
-Paths for `/api/browse` and `/api/add` are relative to `musicRoot` and strictly sandboxed — `..` traversal, absolute paths and symlinks escaping the root are rejected with `400`.
+Paths for `/api/browse` and `/api/add` are relative to `musicRoot` and sandboxed —
+`..` traversal and absolute paths are rejected with `400`. Containment is checked
+lexically, so a **symlink placed inside the root may point outside it** and stays
+browsable (e.g. `~/Music/Network_Music` → a NAS mount); anything reachable that way
+is exposed to the API, so only link in trees you are willing to share.
+
+`/api/add` on a folder walks it recursively, depth-first, with subfolders and tracks
+in name order — so an artist folder queues album by album. Two bounds keep a large
+add from stalling the UI (tags are parsed on the GUI thread as tracks are added):
+at most **2000 files** per call, and **12 levels** deep. On hitting the file cap the
+response adds `"truncated":true`. Directory symlinks that form a cycle are visited
+once, not followed forever.
 
 ### Sources + VBAN
 | Method | Path | Notes |

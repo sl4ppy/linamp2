@@ -449,6 +449,11 @@ bool MainWindow::apiShowClockFace(int index)
 
 static const QStringList kAudioExt = { "mp3","flac","wav","ogg","m4a","aac","opus" };
 
+// Bounds for recursive directory adds. Each added file gets its tags parsed, so
+// an unbounded add of a whole network share would stall the UI for minutes.
+static constexpr int kAddMaxFiles = 2000;
+static constexpr int kAddMaxDepth = 12;
+
 int MainWindow::apiPlaylistCurrent() const
 {
     return m_playlist ? m_playlist->currentIndex() : -1;
@@ -499,11 +504,22 @@ bool MainWindow::resolveSandboxed(const QString &rel, QString &outAbs) const
 {
     const QString rootCanon = QDir(m_musicRoot).canonicalPath();
     if (rootCanon.isEmpty()) return false;
-    const QString candidate = QDir(rootCanon).filePath(rel.isEmpty() ? QStringLiteral(".") : rel);
-    const QString canon = QFileInfo(candidate).canonicalFilePath();
-    if (canon.isEmpty()) return false;                // does not exist
-    if (canon != rootCanon && !canon.startsWith(rootCanon + "/")) return false; // escaped root
-    outAbs = canon;
+
+    // Containment is checked lexically, not canonically: symlinks placed inside the
+    // music root on purpose (e.g. Network_Music -> /mnt/music) point outside it and
+    // would fail a canonical-prefix test. cleanPath collapses any ".." first, so
+    // traversal out of the root is still rejected.
+    QString cleanRel = QDir::cleanPath(rel);
+    if (QDir::isAbsolutePath(cleanRel)) return false;
+    if (cleanRel == ".." || cleanRel.startsWith("../")) return false;
+    if (cleanRel == ".") cleanRel.clear();
+
+    const QString candidate = cleanRel.isEmpty()
+                                  ? rootCanon
+                                  : QDir::cleanPath(rootCanon + '/' + cleanRel);
+    if (candidate != rootCanon && !candidate.startsWith(rootCanon + "/")) return false;
+    if (!QFileInfo::exists(candidate)) return false;
+    outAbs = candidate;
     return true;
 }
 
@@ -541,6 +557,33 @@ QJsonObject MainWindow::apiBrowse(const QString &rel) const
     return res;
 }
 
+// Depth-first walk that mirrors what the browser shows: subdirectories in name
+// order, tracks within each in name order, so an artist folder lands in the
+// playlist album by album rather than interleaved. Collection runs on the main
+// thread and every hit costs a stat over CIFS, so it is bounded on both axes.
+void MainWindow::collectAudioFiles(const QString &absDir, QList<QUrl> &urls,
+                                   QSet<QString> &visited, int depth) const
+{
+    if (depth > kAddMaxDepth || urls.size() >= kAddMaxFiles) return;
+
+    // A symlinked subdirectory can point back at an ancestor; keying on the
+    // canonical path makes such a cycle terminate instead of recursing forever.
+    const QString canon = QFileInfo(absDir).canonicalFilePath();
+    if (canon.isEmpty() || visited.contains(canon)) return;
+    visited.insert(canon);
+
+    QDir dir(absDir);
+    for (const QFileInfo &f : dir.entryInfoList(QDir::Files, QDir::Name)) {
+        if (urls.size() >= kAddMaxFiles) return;
+        if (kAudioExt.contains(f.suffix().toLower()))
+            urls << QUrl::fromLocalFile(f.absoluteFilePath());
+    }
+    for (const QFileInfo &d : dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name)) {
+        if (urls.size() >= kAddMaxFiles) return;
+        collectAudioFiles(d.absoluteFilePath(), urls, visited, depth + 1);
+    }
+}
+
 QJsonObject MainWindow::apiAddPath(const QString &rel)
 {
     QJsonObject res;
@@ -549,11 +592,8 @@ QJsonObject MainWindow::apiAddPath(const QString &rel)
     QFileInfo fi(abs);
     QList<QUrl> urls;
     if (fi.isDir()) {
-        QDir dir(abs);
-        const auto files = dir.entryInfoList(QDir::Files, QDir::Name);
-        for (const QFileInfo &f : files)
-            if (kAudioExt.contains(f.suffix().toLower()))
-                urls << QUrl::fromLocalFile(f.absoluteFilePath());
+        QSet<QString> visited;
+        collectAudioFiles(abs, urls, visited, 0);
     } else if (kAudioExt.contains(fi.suffix().toLower())) {
         urls << QUrl::fromLocalFile(abs);
     }
@@ -561,6 +601,7 @@ QJsonObject MainWindow::apiAddPath(const QString &rel)
     fileSource->addToPlaylist(urls);
     res["ok"] = true;
     res["added"] = urls.size();
+    if (urls.size() >= kAddMaxFiles) res["truncated"] = true;
     return res;
 }
 

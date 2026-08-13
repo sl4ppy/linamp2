@@ -17,8 +17,11 @@ Open `http://<linamp-ip>:8080/` (default port; configurable — see
   transport buttons, and volume / balance sliders. All state updates live.
 - **Playlist** — the current queue with title / artist / duration; tap a row to
   play it, ✕ to remove, Clear to empty. The current track is highlighted.
-- **Files** — browse the device's music folder and add tracks. Strictly
-  sandboxed to a configurable root (`api/musicRoot`, default `~/Music`).
+- **Files** — browse the device's music folder and add tracks. Every row has
+  `+ add`, and **＋ Add folder** queues the folder you are viewing; adding a
+  folder pulls in everything beneath it recursively, album by album. Sandboxed
+  to a configurable root (`api/musicRoot`, default `~/Music`), which may contain
+  symlinks to network shares.
 - **Sources** — switch the active audio source (File / Bluetooth / CD / Spotify)
   and toggle VBAN streaming.
 - **Clocks** — trigger / dismiss the screensaver and pick a specific clock face
@@ -72,9 +75,15 @@ Web-interface settings share the `[api]` group in
 
 - **LAN-bound by default, no auth.** Set a `token` to require it on every
   request (the page sends it via `?token=` / `Authorization: Bearer`).
-- **The file browser is sandboxed** to `musicRoot`: paths are canonicalized and
-  rejected unless they stay under the root — `..` traversal, absolute paths and
-  symlinks escaping the root all return `400`.
+- **The file browser is sandboxed** to `musicRoot`: `..` traversal and absolute
+  paths return `400`. Containment is checked **lexically**, not canonically, so a
+  symlink you place inside the root deliberately (e.g. `Network_Music` → a NAS
+  mount) keeps working even though it resolves outside the root. The trade-off is
+  that anything you link into `musicRoot` becomes reachable from the LAN — link in
+  only what you are willing to serve.
+- **Recursive adds are bounded** at 2000 files and 12 directory levels per call,
+  and symlink cycles are visited once. Without those, a single tap on a large
+  share could block the GUI thread for minutes.
 - Responses send `Access-Control-Allow-Origin: *`. On an untrusted network,
   prefer a token and/or a reverse proxy. HTTPS is out of scope (LAN-only).
 
